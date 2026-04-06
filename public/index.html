@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LexAI — Contract Summarizer</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -20,7 +22,6 @@
       --risk-high: #e05252;
       --risk-med: #e09a52;
       --risk-low: #52a0e0;
-      --green: #52c87a;
     }
 
     body {
@@ -28,22 +29,9 @@
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
       min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.4;
     }
 
     header {
-      position: relative;
-      z-index: 10;
       padding: 2rem 3rem;
       display: flex;
       align-items: center;
@@ -55,7 +43,6 @@
       font-family: 'Playfair Display', serif;
       font-size: 1.5rem;
       color: var(--gold);
-      letter-spacing: 0.05em;
     }
 
     .logo span {
@@ -65,7 +52,6 @@
       display: block;
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      margin-top: 2px;
     }
 
     .badge {
@@ -80,8 +66,6 @@
     }
 
     main {
-      position: relative;
-      z-index: 10;
       max-width: 1200px;
       margin: 0 auto;
       padding: 3rem 2rem;
@@ -90,7 +74,6 @@
     .hero {
       text-align: center;
       margin-bottom: 3rem;
-      animation: fadeUp 0.8s ease both;
     }
 
     .hero h1 {
@@ -108,14 +91,12 @@
       color: var(--text-muted);
       font-size: 1.1rem;
       font-weight: 300;
-      letter-spacing: 0.02em;
     }
 
     .workspace {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1.5rem;
-      animation: fadeUp 0.8s 0.2s ease both;
     }
 
     @media (max-width: 768px) {
@@ -127,7 +108,6 @@
       background: var(--surface);
       border: 1px solid var(--border);
       padding: 1.5rem;
-      position: relative;
     }
 
     .panel-label {
@@ -149,9 +129,116 @@
       background: var(--border);
     }
 
+    /* Upload Zone */
+    .upload-zone {
+      border: 1px dashed var(--border);
+      background: var(--surface2);
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.05);
+    }
+
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .upload-icon {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.4;
+    }
+
+    .upload-zone p {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+
+    .upload-zone .file-types {
+      font-size: 0.6rem;
+      opacity: 0.5;
+      margin-top: 0.3rem;
+    }
+
+    .file-loaded {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: rgba(201,168,76,0.08);
+      border: 1px solid rgba(201,168,76,0.2);
+      margin-bottom: 1rem;
+    }
+
+    .file-loaded.visible { display: flex; }
+
+    .file-icon {
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .file-name {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--gold);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-clear {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .file-clear:hover { color: var(--risk-high); }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider span {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
     textarea {
       width: 100%;
-      height: 460px;
+      height: 220px;
       background: var(--surface2);
       border: 1px solid var(--border);
       color: var(--text);
@@ -202,7 +289,6 @@
     .results-panel { display: flex; flex-direction: column; }
 
     .results-content {
-      flex: 1;
       overflow-y: auto;
       height: 540px;
       padding-right: 0.5rem;
@@ -232,7 +318,7 @@
       opacity: 0.5;
     }
 
-    .result-section { margin-bottom: 1.5rem; animation: fadeUp 0.4s ease both; }
+    .result-section { margin-bottom: 1.5rem; }
 
     .result-section-title {
       font-family: 'DM Mono', monospace;
@@ -245,7 +331,7 @@
       border-bottom: 1px solid var(--border);
     }
 
-    .summary-text { font-size: 0.9rem; line-height: 1.7; color: var(--text); font-weight: 300; }
+    .summary-text { font-size: 0.9rem; line-height: 1.7; font-weight: 300; }
 
     .date-item, .obligation-item {
       display: flex;
@@ -297,7 +383,6 @@
       text-transform: uppercase;
       padding: 0.15rem 0.4rem;
       flex-shrink: 0;
-      margin-top: 0.1rem;
     }
 
     .risk-item.high .risk-badge { color: var(--risk-high); background: rgba(224,82,82,0.1); }
@@ -311,11 +396,6 @@
       padding: 1rem;
       border: 1px solid var(--risk-high);
       background: rgba(224,82,82,0.05);
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -334,15 +414,30 @@
 <main>
   <div class="hero">
     <h1>Understand Any Contract<br>in 30 Seconds</h1>
-    <p>Paste any legal document. Get plain English summaries, key dates, obligations and risks.</p>
+    <p>Upload or paste any legal document. Get plain English summaries, key dates, obligations and risks.</p>
   </div>
 
   <div class="workspace">
     <div class="panel">
-      <div class="panel-label">Contract Input</div>
-      <textarea id="contractInput" placeholder="Paste your legal contract here...
+      <div class="panel-label">Upload Document</div>
 
-Example: This Agreement is entered into as of January 1, 2025, between Acme Corp and John Smith. The Contractor agrees to provide software development services for a period of 12 months..."></textarea>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" onchange="handleFile(this.files[0])" />
+        <div class="upload-icon">📄</div>
+        <p>Drop your contract here or click to browse</p>
+        <p class="file-types">Supports PDF, Word (.docx), and .txt files</p>
+      </div>
+
+      <div class="file-loaded" id="fileLoaded">
+        <span class="file-icon">📎</span>
+        <span class="file-name" id="fileName"></span>
+        <button class="file-clear" onclick="clearFile()" title="Remove file">✕</button>
+      </div>
+
+      <div class="divider"><span>or paste text</span></div>
+
+      <div class="panel-label">Contract Text</div>
+      <textarea id="contractInput" placeholder="Paste your legal contract text here..."></textarea>
       <button class="analyze-btn" id="analyzeBtn" onclick="analyzeContract()">
         <span class="btn-text">Analyze Contract</span>
         <div class="spinner"></div>
@@ -354,7 +449,7 @@ Example: This Agreement is entered into as of January 1, 2025, between Acme Corp
       <div class="results-content" id="resultsContent">
         <div class="placeholder">
           <div class="placeholder-icon">⚖</div>
-          <p>Paste a contract and click<br>Analyze Contract to begin</p>
+          <p>Upload or paste a contract<br>and click Analyze to begin</p>
         </div>
       </div>
     </div>
@@ -362,9 +457,78 @@ Example: This Agreement is entered into as of January 1, 2025, between Acme Corp
 </main>
 
 <script>
+  // Set PDF.js worker
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  let extractedText = '';
+
+  // Drag and drop
+  const uploadZone = document.getElementById('uploadZone');
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  async function handleFile(file) {
+    if (!file) return;
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileLoaded').classList.add('visible');
+    document.getElementById('contractInput').placeholder = 'Text extracted from file — or paste additional text here...';
+
+    try {
+      if (ext === 'pdf') {
+        extractedText = await extractPDF(file);
+      } else if (ext === 'docx' || ext === 'doc') {
+        extractedText = await extractDocx(file);
+      } else if (ext === 'txt') {
+        extractedText = await file.text();
+      } else {
+        alert('Unsupported file type. Please use PDF, Word, or .txt files.');
+        clearFile();
+        return;
+      }
+      document.getElementById('contractInput').value = extractedText;
+    } catch (err) {
+      alert('Could not read file: ' + err.message);
+      clearFile();
+    }
+  }
+
+  async function extractPDF(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(item => item.str).join(' ') + '\n';
+    }
+    return text.trim();
+  }
+
+  async function extractDocx(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value.trim();
+  }
+
+  function clearFile() {
+    extractedText = '';
+    document.getElementById('fileInput').value = '';
+    document.getElementById('fileLoaded').classList.remove('visible');
+    document.getElementById('contractInput').value = '';
+    document.getElementById('contractInput').placeholder = 'Paste your legal contract text here...';
+  }
+
   async function analyzeContract() {
     const contract = document.getElementById('contractInput').value.trim();
-    if (!contract) { alert('Please paste a contract first.'); return; }
+    if (!contract) { alert('Please upload a document or paste contract text first.'); return; }
 
     const btn = document.getElementById('analyzeBtn');
     btn.disabled = true;
