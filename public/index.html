@@ -10,98 +10,68 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #0a0a08;
-      --surface: #111110;
-      --surface2: #1a1a18;
-      --border: #2a2a26;
-      --gold: #c9a84c;
-      --gold-light: #e8c97a;
-      --text: #e8e8e0;
-      --text-muted: #888880;
-      --risk-high: #e05252;
-      --risk-med: #e09a52;
-      --risk-low: #52a0e0;
+      --bg: #0a0a08; --surface: #111110; --surface2: #1a1a18; --border: #2a2a26;
+      --gold: #c9a84c; --gold-light: #e8c97a; --text: #e8e8e0; --text-muted: #888880;
+      --risk-high: #e05252; --risk-med: #e09a52; --risk-low: #52a0e0;
     }
-
     body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
-
     header { padding: 2rem 3rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
-
     .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--gold); }
     .logo span { color: var(--text-muted); font-size: 0.75rem; font-family: 'DM Mono', monospace; display: block; letter-spacing: 0.2em; text-transform: uppercase; }
-
     .badge { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--gold); border: 1px solid var(--gold); padding: 0.3rem 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.7; }
-
     main { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
-
     .hero { text-align: center; margin-bottom: 3rem; }
     .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.1; margin-bottom: 1rem; background: linear-gradient(135deg, var(--text) 0%, var(--gold-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .hero p { color: var(--text-muted); font-size: 1.1rem; font-weight: 300; }
-
-    .workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
     @media (max-width: 768px) { .workspace { grid-template-columns: 1fr; } header { padding: 1.5rem; } }
-
     .panel { background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; }
-
     .panel-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
     .panel-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
     .upload-zone { border: 1px dashed var(--border); background: var(--surface2); padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 1rem; position: relative; }
     .upload-zone:hover, .upload-zone.dragover { border-color: var(--gold); background: rgba(201,168,76,0.05); }
     .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
     .upload-icon { font-size: 1.8rem; margin-bottom: 0.5rem; opacity: 0.4; }
     .upload-zone p { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--text-muted); }
     .upload-zone .file-types { font-size: 0.6rem; opacity: 0.5; margin-top: 0.3rem; }
-
     .file-loaded { display: none; align-items: center; gap: 0.75rem; padding: 0.75rem; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2); margin-bottom: 1rem; }
     .file-loaded.visible { display: flex; }
     .file-icon { font-size: 1.2rem; flex-shrink: 0; }
     .file-name { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--gold); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .file-clear { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 0; flex-shrink: 0; }
+    .file-clear { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 0; }
     .file-clear:hover { color: var(--risk-high); }
-
     .divider { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
     .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
     .divider span { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.15em; text-transform: uppercase; }
-
     textarea { width: 100%; height: 220px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.8rem; line-height: 1.7; padding: 1rem; resize: none; outline: none; transition: border-color 0.2s; }
     textarea:focus { border-color: var(--gold); }
     textarea::placeholder { color: var(--text-muted); opacity: 0.5; }
-
     .analyze-btn { width: 100%; margin-top: 1rem; padding: 1rem; background: var(--gold); color: #0a0a08; border: none; font-family: 'DM Mono', monospace; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
     .analyze-btn:hover { background: var(--gold-light); }
     .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .analyze-btn.loading .btn-text { display: none; }
     .analyze-btn.loading .spinner { display: block; }
     .analyze-btn .spinner { display: none; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
-
     .results-panel { display: flex; flex-direction: column; }
     .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
     .results-header .panel-label { margin-bottom: 0; flex: 1; }
-
     .export-btn { display: none; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem; background: transparent; border: 1px solid var(--gold); color: var(--gold); font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
     .export-btn:hover { background: var(--gold); color: #000; }
     .export-btn.visible { display: flex; }
-
-    .results-content { overflow-y: auto; height: 500px; padding-right: 0.5rem; }
+    .results-content { overflow-y: auto; height: 360px; padding-right: 0.5rem; margin-bottom: 1rem; }
     .results-content::-webkit-scrollbar { width: 4px; }
     .results-content::-webkit-scrollbar-track { background: var(--surface2); }
     .results-content::-webkit-scrollbar-thumb { background: var(--border); }
-
     .placeholder { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; gap: 1rem; }
     .placeholder-icon { font-size: 3rem; opacity: 0.2; }
     .placeholder p { font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; opacity: 0.5; }
-
     .result-section { margin-bottom: 1.5rem; }
     .result-section-title { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
     .summary-text { font-size: 0.9rem; line-height: 1.7; font-weight: 300; }
-
     .date-item, .obligation-item { display: flex; gap: 0.75rem; margin-bottom: 0.6rem; align-items: flex-start; font-size: 0.85rem; line-height: 1.5; }
     .date-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--gold); background: rgba(201,168,76,0.1); padding: 0.15rem 0.4rem; white-space: nowrap; flex-shrink: 0; }
     .obligation-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-top: 0.5rem; flex-shrink: 0; }
-
     .risk-item { display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 0.75rem; padding: 0.75rem; background: var(--surface2); border-left: 3px solid transparent; font-size: 0.85rem; line-height: 1.5; }
     .risk-item.high { border-left-color: var(--risk-high); }
     .risk-item.medium { border-left-color: var(--risk-med); }
@@ -110,25 +80,51 @@
     .risk-item.high .risk-badge { color: var(--risk-high); background: rgba(224,82,82,0.1); }
     .risk-item.medium .risk-badge { color: var(--risk-med); background: rgba(224,154,82,0.1); }
     .risk-item.low .risk-badge { color: var(--risk-low); background: rgba(82,160,224,0.1); }
-
     .error-msg { color: var(--risk-high); font-family: 'DM Mono', monospace; font-size: 0.8rem; padding: 1rem; border: 1px solid var(--risk-high); background: rgba(224,82,82,0.05); }
 
+    /* Chat */
+    .chat-section { display: none; border-top: 1px solid var(--border); padding-top: 1rem; }
+    .chat-section.visible { display: block; }
+    .chat-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+    .chat-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .chat-messages { display: flex; flex-direction: column; gap: 0.75rem; max-height: 240px; overflow-y: auto; margin-bottom: 0.75rem; padding-right: 0.25rem; }
+    .chat-messages::-webkit-scrollbar { width: 3px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); }
+    .chat-msg { display: flex; flex-direction: column; gap: 0.2rem; }
+    .chat-msg.user { align-items: flex-end; }
+    .chat-msg.ai { align-items: flex-start; }
+    .chat-bubble { max-width: 88%; padding: 0.65rem 0.9rem; font-size: 0.85rem; line-height: 1.6; }
+    .chat-msg.user .chat-bubble { background: var(--gold); color: #0a0a08; font-weight: 500; }
+    .chat-msg.ai .chat-bubble { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+    .chat-sender { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); padding: 0 0.2rem; }
+    .chat-suggestions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
+    .suggestion-chip { font-family: 'DM Mono', monospace; font-size: 0.65rem; padding: 0.3rem 0.65rem; background: transparent; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; transition: all 0.15s; letter-spacing: 0.05em; }
+    .suggestion-chip:hover { border-color: var(--gold); color: var(--gold); }
+    .chat-input-row { display: flex; gap: 0.5rem; }
+    .chat-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; padding: 0.65rem 0.9rem; outline: none; transition: border-color 0.2s; }
+    .chat-input:focus { border-color: var(--gold); }
+    .chat-input::placeholder { color: var(--text-muted); opacity: 0.5; }
+    .chat-send-btn { padding: 0.65rem 1rem; background: var(--gold); color: #0a0a08; border: none; font-family: 'DM Mono', monospace; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .chat-send-btn:hover { background: var(--gold-light); }
+    .chat-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 0.65rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); width: fit-content; }
+    .typing-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-muted); animation: typingBounce 1.2s infinite; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-
 <header>
   <div class="logo">LexAI<span>Contract Intelligence</span></div>
   <div class="badge">Beta</div>
 </header>
-
 <main>
   <div class="hero">
     <h1>Understand Any Contract<br>in 30 Seconds</h1>
     <p>Upload or paste any legal document. Get plain English summaries, key dates, obligations and risks.</p>
   </div>
-
   <div class="workspace">
     <div class="panel">
       <div class="panel-label">Upload Document</div>
@@ -163,6 +159,20 @@
           <p>Upload or paste a contract<br>and click Analyze to begin</p>
         </div>
       </div>
+      <div class="chat-section" id="chatSection">
+        <div class="chat-label">Ask a Question</div>
+        <div class="chat-suggestions" id="chatSuggestions">
+          <button class="suggestion-chip" onclick="askSuggestion(this)">What happens if payment is late?</button>
+          <button class="suggestion-chip" onclick="askSuggestion(this)">Who owns the work produced?</button>
+          <button class="suggestion-chip" onclick="askSuggestion(this)">How can this be terminated?</button>
+          <button class="suggestion-chip" onclick="askSuggestion(this)">What are the penalties for breach?</button>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chatInput" type="text" placeholder="Ask anything about this contract..." onkeydown="if(event.key==='Enter') sendQuestion()" />
+          <button class="chat-send-btn" id="chatSendBtn" onclick="sendQuestion()">Ask →</button>
+        </div>
+      </div>
     </div>
   </div>
 </main>
@@ -170,9 +180,7 @@
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-  let extractedText = '';
-  let currentResult = null;
-  let currentFileName = 'Contract';
+  let extractedText = '', currentResult = null, currentFileName = 'Contract', contractText = '', chatHistory = [];
 
   const uploadZone = document.getElementById('uploadZone');
   uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
@@ -224,9 +232,13 @@
   async function analyzeContract() {
     const contract = document.getElementById('contractInput').value.trim();
     if (!contract) { alert('Please upload a document or paste contract text first.'); return; }
+    contractText = contract; chatHistory = [];
     const btn = document.getElementById('analyzeBtn');
     btn.disabled = true; btn.classList.add('loading');
     document.getElementById('exportBtn').classList.remove('visible');
+    document.getElementById('chatSection').classList.remove('visible');
+    document.getElementById('chatMessages').innerHTML = '';
+    document.getElementById('chatSuggestions').style.display = 'flex';
     currentResult = null;
     document.getElementById('resultsContent').innerHTML = `<div class="placeholder"><div class="placeholder-icon" style="animation:spin 1.5s linear infinite;display:inline-block">⚙</div><p>Analyzing contract...</p></div>`;
     try {
@@ -236,6 +248,7 @@
       currentResult = result;
       renderResults(result);
       document.getElementById('exportBtn').classList.add('visible');
+      document.getElementById('chatSection').classList.add('visible');
     } catch (err) {
       document.getElementById('resultsContent').innerHTML = `<div class="error-msg">Error: ${err.message}</div>`;
     }
@@ -243,193 +256,108 @@
   }
 
   function renderResults(r) {
-    const datesHtml = (r.dates || []).map(d => `<div class="date-item"><span class="date-label">${d.label}</span><span>${d.detail}</span></div>`).join('');
-    const obligationsHtml = (r.obligations || []).map(o => `<div class="obligation-item"><div class="obligation-dot"></div><span>${o}</span></div>`).join('');
-    const risksHtml = (r.risks || []).map(risk => `<div class="risk-item ${risk.severity}"><span class="risk-badge">${risk.severity}</span><span>${risk.description}</span></div>`).join('');
+    const datesHtml = (r.dates||[]).map(d=>`<div class="date-item"><span class="date-label">${d.label}</span><span>${d.detail}</span></div>`).join('');
+    const obligationsHtml = (r.obligations||[]).map(o=>`<div class="obligation-item"><div class="obligation-dot"></div><span>${o}</span></div>`).join('');
+    const risksHtml = (r.risks||[]).map(risk=>`<div class="risk-item ${risk.severity}"><span class="risk-badge">${risk.severity}</span><span>${risk.description}</span></div>`).join('');
     document.getElementById('resultsContent').innerHTML = `
       <div class="result-section"><div class="result-section-title">Plain English Summary</div><p class="summary-text">${r.summary}</p></div>
-      <div class="result-section"><div class="result-section-title">Key Dates</div>${datesHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No specific dates found.</p>'}</div>
-      <div class="result-section"><div class="result-section-title">Obligations</div>${obligationsHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No obligations found.</p>'}</div>
-      <div class="result-section"><div class="result-section-title">Risks</div>${risksHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No risks identified.</p>'}</div>`;
+      <div class="result-section"><div class="result-section-title">Key Dates</div>${datesHtml||'<p style="color:var(--text-muted);font-size:0.85rem">No specific dates found.</p>'}</div>
+      <div class="result-section"><div class="result-section-title">Obligations</div>${obligationsHtml||'<p style="color:var(--text-muted);font-size:0.85rem">No obligations found.</p>'}</div>
+      <div class="result-section"><div class="result-section-title">Risks</div>${risksHtml||'<p style="color:var(--text-muted);font-size:0.85rem">No risks identified.</p>'}</div>`;
+  }
+
+  function askSuggestion(btn) {
+    document.getElementById('chatInput').value = btn.textContent;
+    sendQuestion();
+  }
+
+  function appendMessage(role, text) {
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = `chat-msg ${role === 'user' ? 'user' : 'ai'}`;
+    div.innerHTML = `<span class="chat-sender">${role === 'user' ? 'You' : 'LexAI'}</span><div class="chat-bubble">${text}</div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function showTyping() {
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'chat-msg ai'; div.id = 'typingIndicator';
+    div.innerHTML = `<span class="chat-sender">LexAI</span><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function removeTyping() { const el = document.getElementById('typingIndicator'); if (el) el.remove(); }
+
+  async function sendQuestion() {
+    const input = document.getElementById('chatInput');
+    const question = input.value.trim();
+    if (!question || !contractText) return;
+    input.value = '';
+    document.getElementById('chatSendBtn').disabled = true;
+    document.getElementById('chatSuggestions').style.display = 'none';
+    appendMessage('user', question);
+    chatHistory.push({ role: 'user', content: question });
+    showTyping();
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, contractText, chatHistory })
+      });
+      const data = await response.json();
+      removeTyping();
+      if (!response.ok) throw new Error(data.error || 'Something went wrong');
+      appendMessage('ai', data.answer);
+      chatHistory.push({ role: 'assistant', content: data.answer });
+    } catch (err) { removeTyping(); appendMessage('ai', 'Sorry, something went wrong. Please try again.'); }
+    document.getElementById('chatSendBtn').disabled = false;
+    input.focus();
   }
 
   function exportToPDF() {
     if (!currentResult) return;
     const btn = document.getElementById('exportBtn');
     btn.textContent = 'Generating...';
-
     try {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const pageW = doc.internal.pageSize.getWidth();
-      const pageH = doc.internal.pageSize.getHeight();
-      const margin = 20;
-      const contentW = pageW - margin * 2;
+      const pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
+      const margin = 20, contentW = pageW - margin * 2;
       let y = 0;
-
-      // Header
-      doc.setFillColor(10, 10, 8);
-      doc.rect(0, 0, pageW, 38, 'F');
-      doc.setFillColor(201, 168, 76);
-      doc.rect(0, 38, pageW, 1.2, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(22);
-      doc.setTextColor(201, 168, 76);
-      doc.text('LexAI', margin, 20);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      doc.setTextColor(136, 136, 128);
-      doc.text('CONTRACT INTELLIGENCE', margin, 27);
-      const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-      doc.text(`Generated: ${dateStr}`, pageW - margin, 20, { align: 'right' });
-      doc.text('CONFIDENTIAL', pageW - margin, 27, { align: 'right' });
-      y = 52;
-
-      // Title
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(16);
-      doc.setTextColor(30, 30, 28);
-      doc.text('Contract Analysis Report', margin, y);
-      y += 6;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.setTextColor(136, 136, 128);
-      doc.text(currentFileName, margin, y);
-      y += 12;
-      doc.setDrawColor(220, 220, 215);
-      doc.setLineWidth(0.4);
-      doc.line(margin, y, pageW - margin, y);
-      y += 10;
-
-      function sectionHeader(title, color) {
-        if (y > pageH - 40) { doc.addPage(); y = 20; }
-        doc.setFillColor(...color);
-        doc.rect(margin, y, 3, 5, 'F');
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
-        doc.setTextColor(30, 30, 28);
-        doc.text(title.toUpperCase(), margin + 6, y + 4);
-        y += 10;
-        doc.setDrawColor(230, 230, 225);
-        doc.setLineWidth(0.3);
-        doc.line(margin, y, pageW - margin, y);
-        y += 6;
-      }
-
-      // Summary
-      sectionHeader('Plain English Summary', [201, 168, 76]);
-      const summaryLines = doc.splitTextToSize(currentResult.summary, contentW - 10);
-      const boxH = summaryLines.length * 5.5 + 10;
-      if (y + boxH > pageH - 25) { doc.addPage(); y = 20; }
-      doc.setFillColor(252, 250, 245);
-      doc.setDrawColor(201, 168, 76);
-      doc.setLineWidth(0.4);
-      doc.roundedRect(margin, y, contentW, boxH, 2, 2, 'FD');
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9.5);
-      doc.setTextColor(50, 50, 48);
-      summaryLines.forEach((line, i) => doc.text(line, margin + 5, y + 7 + i * 5.5));
-      y += boxH + 10;
-
-      // Dates
-      sectionHeader('Key Dates', [82, 160, 224]);
-      if (currentResult.dates && currentResult.dates.length > 0) {
-        currentResult.dates.forEach(d => {
-          if (y > pageH - 30) { doc.addPage(); y = 20; }
-          const labelW = doc.getTextWidth(d.label) + 8;
-          doc.setFillColor(232, 244, 255);
-          doc.setDrawColor(82, 160, 224);
-          doc.setLineWidth(0.3);
-          doc.roundedRect(margin, y - 4, labelW, 6, 1, 1, 'FD');
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(7.5);
-          doc.setTextColor(82, 160, 224);
-          doc.text(d.label, margin + 4, y);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(9);
-          doc.setTextColor(50, 50, 48);
-          const detailLines = doc.splitTextToSize(d.detail, contentW - labelW - 8);
-          detailLines.forEach((line, i) => {
-            if (y > pageH - 25) { doc.addPage(); y = 20; }
-            doc.text(line, margin + labelW + 4, y);
-            y += 5.5;
-          });
-          y += 2;
-        });
-      } else {
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(136,136,128);
-        doc.text('No specific dates identified.', margin, y); y += 8;
-      }
-      y += 4;
-
-      // Obligations
-      sectionHeader('Obligations', [82, 200, 122]);
-      if (currentResult.obligations && currentResult.obligations.length > 0) {
-        currentResult.obligations.forEach(o => {
-          if (y > pageH - 30) { doc.addPage(); y = 20; }
-          doc.setFillColor(201, 168, 76);
-          doc.circle(margin + 2, y - 1.5, 1.2, 'F');
-          const lines = doc.splitTextToSize(o, contentW - 8);
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(50, 50, 48);
-          lines.forEach(line => { if (y > pageH - 25) { doc.addPage(); y = 20; } doc.text(line, margin + 6, y); y += 5.5; });
-          y += 2;
-        });
-      } else {
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(136,136,128);
-        doc.text('No obligations identified.', margin, y); y += 8;
-      }
-      y += 4;
-
-      // Risks
-      sectionHeader('Risk Assessment', [224, 82, 82]);
-      const riskColors = {
-        high:   { fill: [255,240,240], border: [224,82,82],   text: [224,82,82],   label: 'HIGH' },
-        medium: { fill: [255,246,237], border: [224,154,82],  text: [224,154,82],  label: 'MEDIUM' },
-        low:    { fill: [237,246,255], border: [82,160,224],  text: [82,160,224],  label: 'LOW' }
-      };
-      if (currentResult.risks && currentResult.risks.length > 0) {
-        currentResult.risks.forEach(risk => {
-          const c = riskColors[risk.severity] || riskColors.low;
-          const descLines = doc.splitTextToSize(risk.description, contentW - 28);
-          const riskBoxH = descLines.length * 5.5 + 10;
-          if (y + riskBoxH > pageH - 25) { doc.addPage(); y = 20; }
-          doc.setFillColor(...c.fill); doc.setDrawColor(...c.border); doc.setLineWidth(0.3);
-          doc.rect(margin, y, contentW, riskBoxH, 'FD');
-          doc.setFillColor(...c.border);
-          doc.rect(margin, y, 3, riskBoxH, 'F');
-          const badgeW = doc.getTextWidth(c.label) + 8;
-          doc.setFillColor(...c.border);
-          doc.roundedRect(margin + 7, y + 3, badgeW, 5, 1, 1, 'F');
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(255, 255, 255);
-          doc.text(c.label, margin + 11, y + 6.8);
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(50, 50, 48);
-          descLines.forEach((line, i) => doc.text(line, margin + badgeW + 12, y + 7 + i * 5.5));
-          y += riskBoxH + 4;
-        });
-      } else {
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(136,136,128);
-        doc.text('No risks identified.', margin, y);
-      }
-
-      // Footer on every page
-      const totalPages = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        doc.setPage(i);
-        doc.setFillColor(245, 244, 240);
-        doc.rect(0, pageH - 12, pageW, 12, 'F');
-        doc.setFillColor(201, 168, 76);
-        doc.rect(0, pageH - 12, pageW, 0.5, 'F');
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(136, 136, 128);
-        doc.text('Generated by LexAI — Contract Intelligence', margin, pageH - 5);
-        doc.text(`Page ${i} of ${totalPages}`, pageW - margin, pageH - 5, { align: 'right' });
-        doc.text('This analysis is for informational purposes only and does not constitute legal advice.', pageW / 2, pageH - 5, { align: 'center' });
-      }
-
-      const safeName = currentFileName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      doc.save(`lexai_analysis_${safeName}.pdf`);
-
-    } catch (err) { alert('Export failed: ' + err.message); }
-    btn.textContent = '↓ Export PDF';
+      doc.setFillColor(10,10,8); doc.rect(0,0,pageW,38,'F');
+      doc.setFillColor(201,168,76); doc.rect(0,38,pageW,1.2,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor(201,168,76); doc.text('LexAI',margin,20);
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(136,136,128);
+      doc.text('CONTRACT INTELLIGENCE',margin,27);
+      const dateStr = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+      doc.text(`Generated: ${dateStr}`,pageW-margin,20,{align:'right'}); doc.text('CONFIDENTIAL',pageW-margin,27,{align:'right'});
+      y=52;
+      doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(30,30,28); doc.text('Contract Analysis Report',margin,y); y+=6;
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(136,136,128); doc.text(currentFileName,margin,y); y+=12;
+      doc.setDrawColor(220,220,215); doc.setLineWidth(0.4); doc.line(margin,y,pageW-margin,y); y+=10;
+      function sh(title,color) { if(y>pageH-40){doc.addPage();y=20;} doc.setFillColor(...color); doc.rect(margin,y,3,5,'F'); doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(30,30,28); doc.text(title.toUpperCase(),margin+6,y+4); y+=10; doc.setDrawColor(230,230,225); doc.setLineWidth(0.3); doc.line(margin,y,pageW-margin,y); y+=6; }
+      sh('Plain English Summary',[201,168,76]);
+      const sl=doc.splitTextToSize(currentResult.summary,contentW-10), bh=sl.length*5.5+10;
+      if(y+bh>pageH-25){doc.addPage();y=20;} doc.setFillColor(252,250,245); doc.setDrawColor(201,168,76); doc.setLineWidth(0.4); doc.roundedRect(margin,y,contentW,bh,2,2,'FD');
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(50,50,48); sl.forEach((l,i)=>doc.text(l,margin+5,y+7+i*5.5)); y+=bh+10;
+      sh('Key Dates',[82,160,224]);
+      if(currentResult.dates&&currentResult.dates.length>0){currentResult.dates.forEach(d=>{if(y>pageH-30){doc.addPage();y=20;} const lw=doc.getTextWidth(d.label)+8; doc.setFillColor(232,244,255); doc.setDrawColor(82,160,224); doc.setLineWidth(0.3); doc.roundedRect(margin,y-4,lw,6,1,1,'FD'); doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(82,160,224); doc.text(d.label,margin+4,y); doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(50,50,48); const dl=doc.splitTextToSize(d.detail,contentW-lw-8); dl.forEach(l=>{if(y>pageH-25){doc.addPage();y=20;} doc.text(l,margin+lw+4,y); y+=5.5;}); y+=2;});}
+      else{doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(136,136,128);doc.text('No specific dates identified.',margin,y);y+=8;} y+=4;
+      sh('Obligations',[82,200,122]);
+      if(currentResult.obligations&&currentResult.obligations.length>0){currentResult.obligations.forEach(o=>{if(y>pageH-30){doc.addPage();y=20;} doc.setFillColor(201,168,76); doc.circle(margin+2,y-1.5,1.2,'F'); const ls=doc.splitTextToSize(o,contentW-8); doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(50,50,48); ls.forEach(l=>{if(y>pageH-25){doc.addPage();y=20;} doc.text(l,margin+6,y);y+=5.5;}); y+=2;});}
+      else{doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(136,136,128);doc.text('No obligations identified.',margin,y);y+=8;} y+=4;
+      sh('Risk Assessment',[224,82,82]);
+      const rc={high:{fill:[255,240,240],border:[224,82,82],label:'HIGH'},medium:{fill:[255,246,237],border:[224,154,82],label:'MEDIUM'},low:{fill:[237,246,255],border:[82,160,224],label:'LOW'}};
+      if(currentResult.risks&&currentResult.risks.length>0){currentResult.risks.forEach(risk=>{const c=rc[risk.severity]||rc.low; const dl=doc.splitTextToSize(risk.description,contentW-28); const rh=dl.length*5.5+10; if(y+rh>pageH-25){doc.addPage();y=20;} doc.setFillColor(...c.fill);doc.setDrawColor(...c.border);doc.setLineWidth(0.3);doc.rect(margin,y,contentW,rh,'FD'); doc.setFillColor(...c.border);doc.rect(margin,y,3,rh,'F'); const bw=doc.getTextWidth(c.label)+8; doc.setFillColor(...c.border);doc.roundedRect(margin+7,y+3,bw,5,1,1,'F'); doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(255,255,255);doc.text(c.label,margin+11,y+6.8); doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(50,50,48); dl.forEach((l,i)=>doc.text(l,margin+bw+12,y+7+i*5.5)); y+=rh+4;});}
+      else{doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(136,136,128);doc.text('No risks identified.',margin,y);}
+      const tp=doc.internal.getNumberOfPages();
+      for(let i=1;i<=tp;i++){doc.setPage(i); doc.setFillColor(245,244,240);doc.rect(0,pageH-12,pageW,12,'F'); doc.setFillColor(201,168,76);doc.rect(0,pageH-12,pageW,0.5,'F'); doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(136,136,128); doc.text('Generated by LexAI — Contract Intelligence',margin,pageH-5); doc.text(`Page ${i} of ${tp}`,pageW-margin,pageH-5,{align:'right'}); doc.text('This analysis is for informational purposes only and does not constitute legal advice.',pageW/2,pageH-5,{align:'center'});}
+      doc.save(`lexai_analysis_${currentFileName.replace(/[^a-z0-9]/gi,'_').toLowerCase()}.pdf`);
+    } catch(err){alert('Export failed: '+err.message);}
+    btn.textContent='↓ Export PDF';
   }
 </script>
 </body>
