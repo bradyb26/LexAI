@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LexAI — Contract Summarizer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a08;
+      --surface: #111110;
+      --surface2: #1a1a18;
+      --border: #2a2a26;
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --text: #e8e8e0;
+      --text-muted: #888880;
+      --risk-high: #e05252;
+      --risk-med: #e09a52;
+      --risk-low: #52a0e0;
+      --green: #52c87a;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 2rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--gold);
+      letter-spacing: 0.05em;
+    }
+
+    .logo span {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-family: 'DM Mono', monospace;
+      display: block;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      padding: 0.3rem 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+
+    main {
+      position: relative;
+      z-index: 10;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 3rem;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      line-height: 1.1;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, var(--text) 0%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      font-weight: 300;
+      letter-spacing: 0.02em;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+
+    @media (max-width: 768px) {
+      .workspace { grid-template-columns: 1fr; }
+      header { padding: 1.5rem; }
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .panel-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    textarea {
+      width: 100%;
+      height: 460px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      padding: 1rem;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus { border-color: var(--gold); }
+    textarea::placeholder { color: var(--text-muted); opacity: 0.5; }
+
+    .analyze-btn {
+      width: 100%;
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--gold);
+      color: #0a0a08;
+      border: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .analyze-btn:hover { background: var(--gold-light); }
+    .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .analyze-btn.loading .btn-text { display: none; }
+    .analyze-btn.loading .spinner { display: block; }
+
+    .analyze-btn .spinner {
+      display: none;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(0,0,0,0.3);
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto;
+    }
+
+    .results-panel { display: flex; flex-direction: column; }
+
+    .results-content {
+      flex: 1;
+      overflow-y: auto;
+      height: 540px;
+      padding-right: 0.5rem;
+    }
+
+    .results-content::-webkit-scrollbar { width: 4px; }
+    .results-content::-webkit-scrollbar-track { background: var(--surface2); }
+    .results-content::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .placeholder {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .placeholder-icon { font-size: 3rem; opacity: 0.2; }
+
+    .placeholder p {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      opacity: 0.5;
+    }
+
+    .result-section { margin-bottom: 1.5rem; animation: fadeUp 0.4s ease both; }
+
+    .result-section-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .summary-text { font-size: 0.9rem; line-height: 1.7; color: var(--text); font-weight: 300; }
+
+    .date-item, .obligation-item {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.6rem;
+      align-items: flex-start;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .date-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--gold);
+      background: rgba(201,168,76,0.1);
+      padding: 0.15rem 0.4rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .obligation-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      margin-top: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .risk-item {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      padding: 0.75rem;
+      background: var(--surface2);
+      border-left: 3px solid transparent;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .risk-item.high { border-left-color: var(--risk-high); }
+    .risk-item.medium { border-left-color: var(--risk-med); }
+    .risk-item.low { border-left-color: var(--risk-low); }
+
+    .risk-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.4rem;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    .risk-item.high .risk-badge { color: var(--risk-high); background: rgba(224,82,82,0.1); }
+    .risk-item.medium .risk-badge { color: var(--risk-med); background: rgba(224,154,82,0.1); }
+    .risk-item.low .risk-badge { color: var(--risk-low); background: rgba(82,160,224,0.1); }
+
+    .error-msg {
+      color: var(--risk-high);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      padding: 1rem;
+      border: 1px solid var(--risk-high);
+      background: rgba(224,82,82,0.05);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    LexAI
+    <span>Contract Intelligence</span>
+  </div>
+  <div class="badge">Beta</div>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Understand Any Contract<br>in 30 Seconds</h1>
+    <p>Paste any legal document. Get plain English summaries, key dates, obligations and risks.</p>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">Contract Input</div>
+      <textarea id="contractInput" placeholder="Paste your legal contract here...
+
+Example: This Agreement is entered into as of January 1, 2025, between Acme Corp and John Smith. The Contractor agrees to provide software development services for a period of 12 months..."></textarea>
+      <button class="analyze-btn" id="analyzeBtn" onclick="analyzeContract()">
+        <span class="btn-text">Analyze Contract</span>
+        <div class="spinner"></div>
+      </button>
+    </div>
+
+    <div class="panel results-panel">
+      <div class="panel-label">Analysis Results</div>
+      <div class="results-content" id="resultsContent">
+        <div class="placeholder">
+          <div class="placeholder-icon">⚖</div>
+          <p>Paste a contract and click<br>Analyze Contract to begin</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  async function analyzeContract() {
+    const contract = document.getElementById('contractInput').value.trim();
+    if (!contract) { alert('Please paste a contract first.'); return; }
+
+    const btn = document.getElementById('analyzeBtn');
+    btn.disabled = true;
+    btn.classList.add('loading');
+
+    document.getElementById('resultsContent').innerHTML = `
+      <div class="placeholder">
+        <div class="placeholder-icon" style="animation:spin 1.5s linear infinite;display:inline-block">⚙</div>
+        <p>Analyzing contract...</p>
+      </div>`;
+
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contract })
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Something went wrong');
+      renderResults(result);
+
+    } catch (err) {
+      document.getElementById('resultsContent').innerHTML =
+        `<div class="error-msg">Error: ${err.message}</div>`;
+    }
+
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }
+
+  function renderResults(r) {
+    const datesHtml = (r.dates || []).map(d => `
+      <div class="date-item">
+        <span class="date-label">${d.label}</span>
+        <span>${d.detail}</span>
+      </div>`).join('');
+
+    const obligationsHtml = (r.obligations || []).map(o => `
+      <div class="obligation-item">
+        <div class="obligation-dot"></div>
+        <span>${o}</span>
+      </div>`).join('');
+
+    const risksHtml = (r.risks || []).map(risk => `
+      <div class="risk-item ${risk.severity}">
+        <span class="risk-badge">${risk.severity}</span>
+        <span>${risk.description}</span>
+      </div>`).join('');
+
+    document.getElementById('resultsContent').innerHTML = `
+      <div class="result-section">
+        <div class="result-section-title">Plain English Summary</div>
+        <p class="summary-text">${r.summary}</p>
+      </div>
+      <div class="result-section">
+        <div class="result-section-title">Key Dates</div>
+        ${datesHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No specific dates found.</p>'}
+      </div>
+      <div class="result-section">
+        <div class="result-section-title">Obligations</div>
+        ${obligationsHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No obligations found.</p>'}
+      </div>
+      <div class="result-section">
+        <div class="result-section-title">Risks</div>
+        ${risksHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No risks identified.</p>'}
+      </div>`;
+  }
+</script>
+</body>
+</html>
