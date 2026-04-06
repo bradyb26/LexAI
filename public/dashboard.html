@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LexAI — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;500;600;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a08;
+      --surface: #111110;
+      --surface2: #1a1a18;
+      --border: #2a2a26;
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --text: #e8e8e0;
+      --text-muted: #888880;
+      --risk-high: #e05252;
+      --risk-med: #e09a52;
+      --risk-low: #52a0e0;
+      --green: #52c87a;
+      --sidebar-w: 260px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      z-index: 20;
+    }
+
+    .sidebar-logo {
+      padding: 1.75rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-mark {
+      width: 32px; height: 32px;
+      background: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #000;
+    }
+
+    .logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .logo-text span { color: var(--gold); }
+
+    .sidebar-section {
+      padding: 1.25rem 1rem 0.5rem;
+    }
+
+    .sidebar-section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 0.15rem;
+      position: relative;
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: rgba(201,168,76,0.1); color: var(--gold); }
+    .nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--gold); }
+
+    .nav-item.locked { opacity: 0.45; cursor: not-allowed; }
+    .nav-item.locked:hover { background: transparent; color: var(--text-muted); }
+
+    .nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+
+    .nav-badge {
+      margin-left: auto;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.5rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.4rem;
+      border: 1px solid;
+      flex-shrink: 0;
+    }
+
+    .badge-live { color: var(--green); border-color: var(--green); }
+    .badge-soon { color: var(--text-muted); border-color: var(--border); }
+    .badge-new { color: var(--gold); border-color: var(--gold); }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1.25rem 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: var(--surface2);
+    }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #000;
+      flex-shrink: 0;
+    }
+
+    .user-info { flex: 1; overflow: hidden; }
+
+    .user-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-plan {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+
+    .topbar {
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      font-weight: 400;
+      color: var(--text);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .topbar-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.5rem 1rem;
+      background: var(--gold);
+      color: #000;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+    }
+
+    .topbar-btn:hover { background: var(--gold-light); }
+
+    .content { padding: 2rem; flex: 1; }
+
+    /* ── WELCOME BANNER ── */
+    .welcome-banner {
+      background: linear-gradient(135deg, var(--surface) 0%, rgba(201,168,76,0.06) 100%);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .welcome-text h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 0.3rem;
+    }
+
+    .welcome-text p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .founding-chip {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      padding: 0.4rem 0.9rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.25rem 1.5rem;
+    }
+
+    .stat-card-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .stat-card-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 300;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .stat-card-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+    }
+
+    /* ── TOOLS GRID ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .section-header h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      font-weight: 400;
+      color: var(--text);
+    }
+
+    .section-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .tool-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      display: block;
+    }
+
+    .tool-card:hover:not(.tool-locked) {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.04);
+    }
+
+    .tool-card.tool-locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .tool-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .tool-emoji { font-size: 1.6rem; }
+
+    .tool-status {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.5rem;
+      border: 1px solid;
+    }
+
+    .status-live { color: var(--green); border-color: var(--green); background: rgba(82,200,122,0.06); }
+    .status-soon { color: var(--text-muted); border-color: var(--border); }
+    .status-beta { color: var(--gold); border-color: var(--gold); background: rgba(201,168,76,0.06); }
+
+    .tool-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .tool-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .tool-action {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 1.2rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .tool-locked .tool-action { color: var(--text-muted); }
+
+    .lock-icon {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      font-size: 0.9rem;
+      opacity: 0.3;
+    }
+
+    /* ── RECENT ACTIVITY ── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+    }
+
+    .panel-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .activity-item:last-child { border-bottom: none; }
+
+    .activity-icon {
+      width: 32px; height: 32px;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .activity-info { flex: 1; }
+
+    .activity-name {
+      font-size: 0.82rem;
+      color: var(--text);
+      font-weight: 500;
+      margin-bottom: 0.15rem;
+    }
+
+    .activity-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .activity-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--green);
+      border: 1px solid var(--green);
+      padding: 0.15rem 0.4rem;
+    }
+
+    /* Roadmap */
+    .roadmap-item {
+      display: flex;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+
+    .roadmap-item:last-child { border-bottom: none; }
+
+    .roadmap-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-top: 0.3rem;
+      flex-shrink: 0;
+    }
+
+    .dot-done { background: var(--green); }
+    .dot-next { background: var(--gold); }
+    .dot-soon { background: var(--border); }
+
+    .roadmap-info { flex: 1; }
+
+    .roadmap-name {
+      font-size: 0.82rem;
+      color: var(--text);
+      font-weight: 500;
+      margin-bottom: 0.15rem;
+    }
+
+    .roadmap-desc {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .roadmap-status {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .roadmap-status.done { color: var(--green); }
+    .roadmap-status.next { color: var(--gold); }
+
+    @media (max-width: 1100px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .tools-grid { grid-template-columns: repeat(2, 1fr); }
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .tools-grid { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">L</div>
+    <div class="logo-text">Lex<span>AI</span></div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Main</div>
+    <a href="#" class="nav-item active" onclick="showTool('dashboard'); return false;">
+      <span class="nav-icon">⊞</span> Dashboard
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Tools — Live</div>
+    <a href="#" class="nav-item" onclick="showTool('summarizer'); return false;">
+      <span class="nav-icon">⚖</span> Contract Summarizer
+      <span class="nav-badge badge-live">Live</span>
+    </a>
+    <a href="#" class="nav-item" onclick="showTool('summarizer'); return false;">
+      <span class="nav-icon">💬</span> Ask a Question
+      <span class="nav-badge badge-live">Live</span>
+    </a>
+    <a href="#" class="nav-item" onclick="showTool('summarizer'); return false;">
+      <span class="nav-icon">📄</span> PDF Export
+      <span class="nav-badge badge-live">Live</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Tools — Coming Soon</div>
+    <a href="#" class="nav-item locked" onclick="comingSoon(); return false;">
+      <span class="nav-icon">✍️</span> Document Drafter
+      <span class="nav-badge badge-soon">Soon</span>
+    </a>
+    <a href="#" class="nav-item locked" onclick="comingSoon(); return false;">
+      <span class="nav-icon">📋</span> Client Intake
+      <span class="nav-badge badge-soon">Soon</span>
+    </a>
+    <a href="#" class="nav-item locked" onclick="comingSoon(); return false;">
+      <span class="nav-icon">⏰</span> Deadline Tracker
+      <span class="nav-badge badge-soon">Soon</span>
+    </a>
+    <a href="#" class="nav-item locked" onclick="comingSoon(); return false;">
+      <span class="nav-icon">🔍</span> Case Research
+      <span class="nav-badge badge-soon">Soon</span>
+    </a>
+    <a href="#" class="nav-item locked" onclick="comingSoon(); return false;">
+      <span class="nav-icon">🎙</span> Meeting Summarizer
+      <span class="nav-badge badge-soon">Soon</span>
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">F</div>
+      <div class="user-info">
+        <div class="user-name">Founding Member</div>
+        <div class="user-plan">$49/mo · Locked Forever</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main" id="mainContent">
+
+  <!-- DASHBOARD VIEW -->
+  <div id="dashboardView">
+    <div class="topbar">
+      <div class="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <a href="#" onclick="showTool('summarizer'); return false;" class="topbar-btn">+ New Analysis</a>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Welcome -->
+      <div class="welcome-banner">
+        <div class="welcome-text">
+          <h2>Welcome to LexAI</h2>
+          <p>Your AI legal platform is ready. Start by analyzing a contract or explore what's coming next.</p>
+        </div>
+        <div class="founding-chip">Founding Member</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-label">Contracts Analyzed</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">Analyze your first contract</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Questions Asked</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">Use the Ask a Question feature</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">PDFs Exported</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">Export your first report</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Time Saved</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">Est. hours saved this month</div>
+        </div>
+      </div>
+
+      <!-- Tools -->
+      <div class="section-header">
+        <h3>Your Tools</h3>
+        <div class="section-tag">3 Live · 5 Coming Soon</div>
+      </div>
+
+      <div class="tools-grid">
+        <!-- Live -->
+        <div class="tool-card" onclick="showTool('summarizer')">
+          <div class="tool-card-top">
+            <span class="tool-emoji">⚖</span>
+            <span class="tool-status status-live">Live</span>
+          </div>
+          <div class="tool-name">Contract Summarizer</div>
+          <div class="tool-desc">Upload any contract and get a plain English summary, key dates, obligations and risk assessment in 30 seconds.</div>
+          <div class="tool-action">Open Tool →</div>
+        </div>
+
+        <div class="tool-card" onclick="showTool('summarizer')">
+          <div class="tool-card-top">
+            <span class="tool-emoji">💬</span>
+            <span class="tool-status status-live">Live</span>
+          </div>
+          <div class="tool-name">Ask a Question</div>
+          <div class="tool-desc">After analyzing a contract, ask anything about it. What are the penalties? Who owns the IP? Get instant answers.</div>
+          <div class="tool-action">Open Tool →</div>
+        </div>
+
+        <div class="tool-card" onclick="showTool('summarizer')">
+          <div class="tool-card-top">
+            <span class="tool-emoji">📄</span>
+            <span class="tool-status status-live">Live</span>
+          </div>
+          <div class="tool-name">PDF Export</div>
+          <div class="tool-desc">Export a professional branded analysis report to share with clients. Includes full summary, risks and obligations.</div>
+          <div class="tool-action">Open Tool →</div>
+        </div>
+
+        <!-- Coming Soon -->
+        <div class="tool-card tool-locked">
+          <span class="lock-icon">🔒</span>
+          <div class="tool-card-top">
+            <span class="tool-emoji">✍️</span>
+            <span class="tool-status status-soon">Coming Soon</span>
+          </div>
+          <div class="tool-name">Document Drafter</div>
+          <div class="tool-desc">Generate first drafts of NDAs, service agreements, and other legal documents in seconds. Edit and download instantly.</div>
+          <div class="tool-action" style="color:var(--text-muted)">In Development</div>
+        </div>
+
+        <div class="tool-card tool-locked">
+          <span class="lock-icon">🔒</span>
+          <div class="tool-card-top">
+            <span class="tool-emoji">📋</span>
+            <span class="tool-status status-soon">Coming Soon</span>
+          </div>
+          <div class="tool-name">Client Intake</div>
+          <div class="tool-desc">AI automatically collects all client information before the first meeting so you walk in fully prepared every time.</div>
+          <div class="tool-action" style="color:var(--text-muted)">In Development</div>
+        </div>
+
+        <div class="tool-card tool-locked">
+          <span class="lock-icon">🔒</span>
+          <div class="tool-card-top">
+            <span class="tool-emoji">⏰</span>
+            <span class="tool-status status-soon">Coming Soon</span>
+          </div>
+          <div class="tool-name">Deadline Tracker</div>
+          <div class="tool-desc">Never miss a case deadline. AI monitors your documents and sends automatic reminders before critical dates.</div>
+          <div class="tool-action" style="color:var(--text-muted)">In Development</div>
+        </div>
+
+        <div class="tool-card tool-locked">
+          <span class="lock-icon">🔒</span>
+          <div class="tool-card-top">
+            <span class="tool-emoji">🔍</span>
+            <span class="tool-status status-soon">Coming Soon</span>
+          </div>
+          <div class="tool-name">Case Research</div>
+          <div class="tool-desc">AI searches relevant case law and precedents for your matter. Get a research brief in minutes, not hours.</div>
+          <div class="tool-action" style="color:var(--text-muted)">In Development</div>
+        </div>
+
+        <div class="tool-card tool-locked">
+          <span class="lock-icon">🔒</span>
+          <div class="tool-card-top">
+            <span class="tool-emoji">🎙</span>
+            <span class="tool-status status-soon">Coming Soon</span>
+          </div>
+          <div class="tool-name">Meeting Summarizer</div>
+          <div class="tool-desc">Record client calls and automatically extract key facts, agreed actions and follow-up items. Never lose a detail.</div>
+          <div class="tool-action" style="color:var(--text-muted)">In Development</div>
+        </div>
+      </div>
+
+      <!-- Bottom Grid -->
+      <div class="bottom-grid">
+        <div class="panel">
+          <div class="panel-title">
+            Recent Activity
+            <span style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--text-muted)">This Month</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon">⚖</div>
+            <div class="activity-info">
+              <div class="activity-name">No analyses yet</div>
+              <div class="activity-meta">Start by uploading your first contract</div>
+            </div>
+          </div>
+          <div style="margin-top:1rem;">
+            <a href="#" onclick="showTool('summarizer'); return false;" style="font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);text-decoration:none;">Analyze First Contract →</a>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            Product Roadmap
+            <span style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--text-muted)">What's Next</span>
+          </div>
+          <div class="roadmap-item">
+            <div class="roadmap-dot dot-done"></div>
+            <div class="roadmap-info">
+              <div class="roadmap-name">Contract Summarizer</div>
+              <div class="roadmap-desc">Upload, analyze, ask questions, export PDF</div>
+            </div>
+            <div class="roadmap-status done">Done</div>
+          </div>
+          <div class="roadmap-item">
+            <div class="roadmap-dot dot-next"></div>
+            <div class="roadmap-info">
+              <div class="roadmap-name">Document Drafter</div>
+              <div class="roadmap-desc">AI-generated legal document drafts</div>
+            </div>
+            <div class="roadmap-status next">Up Next</div>
+          </div>
+          <div class="roadmap-item">
+            <div class="roadmap-dot dot-soon"></div>
+            <div class="roadmap-info">
+              <div class="roadmap-name">Client Intake</div>
+              <div class="roadmap-desc">Automated pre-meeting client forms</div>
+            </div>
+            <div class="roadmap-status">Planned</div>
+          </div>
+          <div class="roadmap-item">
+            <div class="roadmap-dot dot-soon"></div>
+            <div class="roadmap-info">
+              <div class="roadmap-name">Deadline Tracker</div>
+              <div class="roadmap-desc">Smart deadline monitoring & alerts</div>
+            </div>
+            <div class="roadmap-status">Planned</div>
+          </div>
+          <div class="roadmap-item">
+            <div class="roadmap-dot dot-soon"></div>
+            <div class="roadmap-info">
+              <div class="roadmap-name">Case Research</div>
+              <div class="roadmap-desc">AI-powered case law research</div>
+            </div>
+            <div class="roadmap-status">Planned</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOL VIEW (embeds the actual app) -->
+  <div id="toolView" style="display:none; flex:1; flex-direction:column;">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <a href="#" onclick="showDashboard(); return false;" style="font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;">← Back</a>
+        <div class="topbar-title" id="toolViewTitle">Contract Summarizer</div>
+      </div>
+    </div>
+    <iframe id="toolFrame" src="/app" style="flex:1;border:none;width:100%;height:calc(100vh - 57px);"></iframe>
+  </div>
+
+</div>
+
+<script>
+  function showTool(tool) {
+    document.getElementById('dashboardView').style.display = 'none';
+    document.getElementById('toolView').style.display = 'flex';
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  }
+
+  function showDashboard() {
+    document.getElementById('dashboardView').style.display = 'block';
+    document.getElementById('toolView').style.display = 'none';
+    document.querySelectorAll('.nav-item').forEach((i, idx) => { if (idx === 0) i.classList.add('active'); });
+  }
+
+  function comingSoon() {
+    alert('This feature is coming soon. You\'ll get early access as a founding member!');
+  }
+</script>
+
+</body>
+</html>
