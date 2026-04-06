@@ -10,5 +10,6 @@
     { "src": "/app", "dest": "/public/app.html" },
     { "src": "/", "dest": "/public/landing.html" },
     { "src": "/(.*)", "dest": "/public/landing.html" }
+    { "src": "/dashboard", "dest": "/public/dashboard.html" }
   ]
 }
