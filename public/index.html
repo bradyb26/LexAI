@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -24,379 +25,93 @@
       --risk-low: #52a0e0;
     }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      min-height: 100vh;
-    }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
 
-    header {
-      padding: 2rem 3rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-    }
+    header { padding: 2rem 3rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
 
-    .logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      color: var(--gold);
-    }
+    .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--gold); }
+    .logo span { color: var(--text-muted); font-size: 0.75rem; font-family: 'DM Mono', monospace; display: block; letter-spacing: 0.2em; text-transform: uppercase; }
 
-    .logo span {
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      font-family: 'DM Mono', monospace;
-      display: block;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-    }
+    .badge { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--gold); border: 1px solid var(--gold); padding: 0.3rem 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.7; }
 
-    .badge {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.65rem;
-      color: var(--gold);
-      border: 1px solid var(--gold);
-      padding: 0.3rem 0.7rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      opacity: 0.7;
-    }
+    main { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
 
-    main {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 3rem 2rem;
-    }
+    .hero { text-align: center; margin-bottom: 3rem; }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.1; margin-bottom: 1rem; background: linear-gradient(135deg, var(--text) 0%, var(--gold-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero p { color: var(--text-muted); font-size: 1.1rem; font-weight: 300; }
 
-    .hero {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
+    .workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 768px) { .workspace { grid-template-columns: 1fr; } header { padding: 1.5rem; } }
 
-    .hero h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(2.5rem, 5vw, 4rem);
-      line-height: 1.1;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, var(--text) 0%, var(--gold-light) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
+    .panel { background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; }
 
-    .hero p {
-      color: var(--text-muted);
-      font-size: 1.1rem;
-      font-weight: 300;
-    }
+    .panel-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .panel-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-    .workspace {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
+    .upload-zone { border: 1px dashed var(--border); background: var(--surface2); padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 1rem; position: relative; }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--gold); background: rgba(201,168,76,0.05); }
+    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-icon { font-size: 1.8rem; margin-bottom: 0.5rem; opacity: 0.4; }
+    .upload-zone p { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--text-muted); }
+    .upload-zone .file-types { font-size: 0.6rem; opacity: 0.5; margin-top: 0.3rem; }
 
-    @media (max-width: 768px) {
-      .workspace { grid-template-columns: 1fr; }
-      header { padding: 1.5rem; }
-    }
-
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 1.5rem;
-    }
-
-    .panel-label {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.65rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .panel-label::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    /* Upload Zone */
-    .upload-zone {
-      border: 1px dashed var(--border);
-      background: var(--surface2);
-      padding: 1.5rem;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-bottom: 1rem;
-      position: relative;
-    }
-
-    .upload-zone:hover, .upload-zone.dragover {
-      border-color: var(--gold);
-      background: rgba(201,168,76,0.05);
-    }
-
-    .upload-zone input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
-    }
-
-    .upload-icon {
-      font-size: 1.8rem;
-      margin-bottom: 0.5rem;
-      opacity: 0.4;
-    }
-
-    .upload-zone p {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.7rem;
-      letter-spacing: 0.1em;
-      color: var(--text-muted);
-    }
-
-    .upload-zone .file-types {
-      font-size: 0.6rem;
-      opacity: 0.5;
-      margin-top: 0.3rem;
-    }
-
-    .file-loaded {
-      display: none;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem;
-      background: rgba(201,168,76,0.08);
-      border: 1px solid rgba(201,168,76,0.2);
-      margin-bottom: 1rem;
-    }
-
+    .file-loaded { display: none; align-items: center; gap: 0.75rem; padding: 0.75rem; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2); margin-bottom: 1rem; }
     .file-loaded.visible { display: flex; }
-
-    .file-icon {
-      font-size: 1.2rem;
-      flex-shrink: 0;
-    }
-
-    .file-name {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.75rem;
-      color: var(--gold);
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .file-clear {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 1rem;
-      padding: 0;
-      flex-shrink: 0;
-    }
-
+    .file-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .file-name { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--gold); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-clear { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 0; flex-shrink: 0; }
     .file-clear:hover { color: var(--risk-high); }
 
-    /* Divider */
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
+    .divider { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .divider span { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.15em; text-transform: uppercase; }
 
-    .divider::before, .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    .divider span {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.6rem;
-      color: var(--text-muted);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-    }
-
-    textarea {
-      width: 100%;
-      height: 220px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-family: 'DM Mono', monospace;
-      font-size: 0.8rem;
-      line-height: 1.7;
-      padding: 1rem;
-      resize: none;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
+    textarea { width: 100%; height: 220px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.8rem; line-height: 1.7; padding: 1rem; resize: none; outline: none; transition: border-color 0.2s; }
     textarea:focus { border-color: var(--gold); }
     textarea::placeholder { color: var(--text-muted); opacity: 0.5; }
 
-    .analyze-btn {
-      width: 100%;
-      margin-top: 1rem;
-      padding: 1rem;
-      background: var(--gold);
-      color: #0a0a08;
-      border: none;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.8rem;
-      font-weight: 500;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
+    .analyze-btn { width: 100%; margin-top: 1rem; padding: 1rem; background: var(--gold); color: #0a0a08; border: none; font-family: 'DM Mono', monospace; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
     .analyze-btn:hover { background: var(--gold-light); }
     .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .analyze-btn.loading .btn-text { display: none; }
     .analyze-btn.loading .spinner { display: block; }
-
-    .analyze-btn .spinner {
-      display: none;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(0,0,0,0.3);
-      border-top-color: #000;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto;
-    }
+    .analyze-btn .spinner { display: none; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
 
     .results-panel { display: flex; flex-direction: column; }
+    .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .results-header .panel-label { margin-bottom: 0; flex: 1; }
 
-    .results-content {
-      overflow-y: auto;
-      height: 540px;
-      padding-right: 0.5rem;
-    }
+    .export-btn { display: none; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem; background: transparent; border: 1px solid var(--gold); color: var(--gold); font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+    .export-btn:hover { background: var(--gold); color: #000; }
+    .export-btn.visible { display: flex; }
 
+    .results-content { overflow-y: auto; height: 500px; padding-right: 0.5rem; }
     .results-content::-webkit-scrollbar { width: 4px; }
     .results-content::-webkit-scrollbar-track { background: var(--surface2); }
     .results-content::-webkit-scrollbar-thumb { background: var(--border); }
 
-    .placeholder {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-muted);
-      text-align: center;
-      gap: 1rem;
-    }
-
+    .placeholder { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; gap: 1rem; }
     .placeholder-icon { font-size: 3rem; opacity: 0.2; }
-
-    .placeholder p {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.75rem;
-      letter-spacing: 0.1em;
-      opacity: 0.5;
-    }
+    .placeholder p { font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; opacity: 0.5; }
 
     .result-section { margin-bottom: 1.5rem; }
-
-    .result-section-title {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.65rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 0.75rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--border);
-    }
-
+    .result-section-title { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
     .summary-text { font-size: 0.9rem; line-height: 1.7; font-weight: 300; }
 
-    .date-item, .obligation-item {
-      display: flex;
-      gap: 0.75rem;
-      margin-bottom: 0.6rem;
-      align-items: flex-start;
-      font-size: 0.85rem;
-      line-height: 1.5;
-    }
+    .date-item, .obligation-item { display: flex; gap: 0.75rem; margin-bottom: 0.6rem; align-items: flex-start; font-size: 0.85rem; line-height: 1.5; }
+    .date-label { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--gold); background: rgba(201,168,76,0.1); padding: 0.15rem 0.4rem; white-space: nowrap; flex-shrink: 0; }
+    .obligation-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-top: 0.5rem; flex-shrink: 0; }
 
-    .date-label {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.7rem;
-      color: var(--gold);
-      background: rgba(201,168,76,0.1);
-      padding: 0.15rem 0.4rem;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .obligation-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--gold);
-      margin-top: 0.5rem;
-      flex-shrink: 0;
-    }
-
-    .risk-item {
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-start;
-      margin-bottom: 0.75rem;
-      padding: 0.75rem;
-      background: var(--surface2);
-      border-left: 3px solid transparent;
-      font-size: 0.85rem;
-      line-height: 1.5;
-    }
-
+    .risk-item { display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 0.75rem; padding: 0.75rem; background: var(--surface2); border-left: 3px solid transparent; font-size: 0.85rem; line-height: 1.5; }
     .risk-item.high { border-left-color: var(--risk-high); }
     .risk-item.medium { border-left-color: var(--risk-med); }
     .risk-item.low { border-left-color: var(--risk-low); }
-
-    .risk-badge {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.6rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 0.15rem 0.4rem;
-      flex-shrink: 0;
-    }
-
+    .risk-badge { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.4rem; flex-shrink: 0; }
     .risk-item.high .risk-badge { color: var(--risk-high); background: rgba(224,82,82,0.1); }
     .risk-item.medium .risk-badge { color: var(--risk-med); background: rgba(224,154,82,0.1); }
     .risk-item.low .risk-badge { color: var(--risk-low); background: rgba(82,160,224,0.1); }
 
-    .error-msg {
-      color: var(--risk-high);
-      font-family: 'DM Mono', monospace;
-      font-size: 0.8rem;
-      padding: 1rem;
-      border: 1px solid var(--risk-high);
-      background: rgba(224,82,82,0.05);
-    }
+    .error-msg { color: var(--risk-high); font-family: 'DM Mono', monospace; font-size: 0.8rem; padding: 1rem; border: 1px solid var(--risk-high); background: rgba(224,82,82,0.05); }
 
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
@@ -404,10 +119,7 @@
 <body>
 
 <header>
-  <div class="logo">
-    LexAI
-    <span>Contract Intelligence</span>
-  </div>
+  <div class="logo">LexAI<span>Contract Intelligence</span></div>
   <div class="badge">Beta</div>
 </header>
 
@@ -420,22 +132,18 @@
   <div class="workspace">
     <div class="panel">
       <div class="panel-label">Upload Document</div>
-
       <div class="upload-zone" id="uploadZone">
         <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" onchange="handleFile(this.files[0])" />
         <div class="upload-icon">📄</div>
         <p>Drop your contract here or click to browse</p>
         <p class="file-types">Supports PDF, Word (.docx), and .txt files</p>
       </div>
-
       <div class="file-loaded" id="fileLoaded">
         <span class="file-icon">📎</span>
         <span class="file-name" id="fileName"></span>
-        <button class="file-clear" onclick="clearFile()" title="Remove file">✕</button>
+        <button class="file-clear" onclick="clearFile()">✕</button>
       </div>
-
       <div class="divider"><span>or paste text</span></div>
-
       <div class="panel-label">Contract Text</div>
       <textarea id="contractInput" placeholder="Paste your legal contract text here..."></textarea>
       <button class="analyze-btn" id="analyzeBtn" onclick="analyzeContract()">
@@ -445,7 +153,10 @@
     </div>
 
     <div class="panel results-panel">
-      <div class="panel-label">Analysis Results</div>
+      <div class="results-header">
+        <div class="panel-label">Analysis Results</div>
+        <button class="export-btn" id="exportBtn" onclick="exportToPDF()">↓ Export PDF</button>
+      </div>
       <div class="results-content" id="resultsContent">
         <div class="placeholder">
           <div class="placeholder-icon">⚖</div>
@@ -457,69 +168,53 @@
 </main>
 
 <script>
-  // Set PDF.js worker
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
   let extractedText = '';
+  let currentResult = null;
+  let currentFileName = 'Contract';
 
-  // Drag and drop
   const uploadZone = document.getElementById('uploadZone');
   uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
   uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-  uploadZone.addEventListener('drop', e => {
-    e.preventDefault();
-    uploadZone.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
-  });
+  uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('dragover'); const f = e.dataTransfer.files[0]; if (f) handleFile(f); });
 
   async function handleFile(file) {
     if (!file) return;
-
     const ext = file.name.split('.').pop().toLowerCase();
+    currentFileName = file.name.replace(/\.[^/.]+$/, '');
     document.getElementById('fileName').textContent = file.name;
     document.getElementById('fileLoaded').classList.add('visible');
-    document.getElementById('contractInput').placeholder = 'Text extracted from file — or paste additional text here...';
-
+    document.getElementById('contractInput').placeholder = 'Text extracted from file...';
     try {
-      if (ext === 'pdf') {
-        extractedText = await extractPDF(file);
-      } else if (ext === 'docx' || ext === 'doc') {
-        extractedText = await extractDocx(file);
-      } else if (ext === 'txt') {
-        extractedText = await file.text();
-      } else {
-        alert('Unsupported file type. Please use PDF, Word, or .txt files.');
-        clearFile();
-        return;
-      }
+      if (ext === 'pdf') extractedText = await extractPDF(file);
+      else if (ext === 'docx' || ext === 'doc') extractedText = await extractDocx(file);
+      else if (ext === 'txt') extractedText = await file.text();
+      else { alert('Unsupported file type.'); clearFile(); return; }
       document.getElementById('contractInput').value = extractedText;
-    } catch (err) {
-      alert('Could not read file: ' + err.message);
-      clearFile();
-    }
+    } catch (err) { alert('Could not read file: ' + err.message); clearFile(); }
   }
 
   async function extractPDF(file) {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const ab = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
     let text = '';
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
-      text += content.items.map(item => item.str).join(' ') + '\n';
+      text += content.items.map(it => it.str).join(' ') + '\n';
     }
     return text.trim();
   }
 
   async function extractDocx(file) {
-    const arrayBuffer = await file.arrayBuffer();
-    const result = await mammoth.extractRawText({ arrayBuffer });
+    const ab = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer: ab });
     return result.value.trim();
   }
 
   function clearFile() {
-    extractedText = '';
+    extractedText = ''; currentFileName = 'Contract';
     document.getElementById('fileInput').value = '';
     document.getElementById('fileLoaded').classList.remove('visible');
     document.getElementById('contractInput').value = '';
@@ -529,73 +224,212 @@
   async function analyzeContract() {
     const contract = document.getElementById('contractInput').value.trim();
     if (!contract) { alert('Please upload a document or paste contract text first.'); return; }
-
     const btn = document.getElementById('analyzeBtn');
-    btn.disabled = true;
-    btn.classList.add('loading');
-
-    document.getElementById('resultsContent').innerHTML = `
-      <div class="placeholder">
-        <div class="placeholder-icon" style="animation:spin 1.5s linear infinite;display:inline-block">⚙</div>
-        <p>Analyzing contract...</p>
-      </div>`;
-
+    btn.disabled = true; btn.classList.add('loading');
+    document.getElementById('exportBtn').classList.remove('visible');
+    currentResult = null;
+    document.getElementById('resultsContent').innerHTML = `<div class="placeholder"><div class="placeholder-icon" style="animation:spin 1.5s linear infinite;display:inline-block">⚙</div><p>Analyzing contract...</p></div>`;
     try {
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contract })
-      });
-
+      const response = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contract }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Something went wrong');
+      currentResult = result;
       renderResults(result);
-
+      document.getElementById('exportBtn').classList.add('visible');
     } catch (err) {
-      document.getElementById('resultsContent').innerHTML =
-        `<div class="error-msg">Error: ${err.message}</div>`;
+      document.getElementById('resultsContent').innerHTML = `<div class="error-msg">Error: ${err.message}</div>`;
     }
-
-    btn.disabled = false;
-    btn.classList.remove('loading');
+    btn.disabled = false; btn.classList.remove('loading');
   }
 
   function renderResults(r) {
-    const datesHtml = (r.dates || []).map(d => `
-      <div class="date-item">
-        <span class="date-label">${d.label}</span>
-        <span>${d.detail}</span>
-      </div>`).join('');
-
-    const obligationsHtml = (r.obligations || []).map(o => `
-      <div class="obligation-item">
-        <div class="obligation-dot"></div>
-        <span>${o}</span>
-      </div>`).join('');
-
-    const risksHtml = (r.risks || []).map(risk => `
-      <div class="risk-item ${risk.severity}">
-        <span class="risk-badge">${risk.severity}</span>
-        <span>${risk.description}</span>
-      </div>`).join('');
-
+    const datesHtml = (r.dates || []).map(d => `<div class="date-item"><span class="date-label">${d.label}</span><span>${d.detail}</span></div>`).join('');
+    const obligationsHtml = (r.obligations || []).map(o => `<div class="obligation-item"><div class="obligation-dot"></div><span>${o}</span></div>`).join('');
+    const risksHtml = (r.risks || []).map(risk => `<div class="risk-item ${risk.severity}"><span class="risk-badge">${risk.severity}</span><span>${risk.description}</span></div>`).join('');
     document.getElementById('resultsContent').innerHTML = `
-      <div class="result-section">
-        <div class="result-section-title">Plain English Summary</div>
-        <p class="summary-text">${r.summary}</p>
-      </div>
-      <div class="result-section">
-        <div class="result-section-title">Key Dates</div>
-        ${datesHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No specific dates found.</p>'}
-      </div>
-      <div class="result-section">
-        <div class="result-section-title">Obligations</div>
-        ${obligationsHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No obligations found.</p>'}
-      </div>
-      <div class="result-section">
-        <div class="result-section-title">Risks</div>
-        ${risksHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No risks identified.</p>'}
-      </div>`;
+      <div class="result-section"><div class="result-section-title">Plain English Summary</div><p class="summary-text">${r.summary}</p></div>
+      <div class="result-section"><div class="result-section-title">Key Dates</div>${datesHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No specific dates found.</p>'}</div>
+      <div class="result-section"><div class="result-section-title">Obligations</div>${obligationsHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No obligations found.</p>'}</div>
+      <div class="result-section"><div class="result-section-title">Risks</div>${risksHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No risks identified.</p>'}</div>`;
+  }
+
+  function exportToPDF() {
+    if (!currentResult) return;
+    const btn = document.getElementById('exportBtn');
+    btn.textContent = 'Generating...';
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const contentW = pageW - margin * 2;
+      let y = 0;
+
+      // Header
+      doc.setFillColor(10, 10, 8);
+      doc.rect(0, 0, pageW, 38, 'F');
+      doc.setFillColor(201, 168, 76);
+      doc.rect(0, 38, pageW, 1.2, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.setTextColor(201, 168, 76);
+      doc.text('LexAI', margin, 20);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(136, 136, 128);
+      doc.text('CONTRACT INTELLIGENCE', margin, 27);
+      const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.text(`Generated: ${dateStr}`, pageW - margin, 20, { align: 'right' });
+      doc.text('CONFIDENTIAL', pageW - margin, 27, { align: 'right' });
+      y = 52;
+
+      // Title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(30, 30, 28);
+      doc.text('Contract Analysis Report', margin, y);
+      y += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(136, 136, 128);
+      doc.text(currentFileName, margin, y);
+      y += 12;
+      doc.setDrawColor(220, 220, 215);
+      doc.setLineWidth(0.4);
+      doc.line(margin, y, pageW - margin, y);
+      y += 10;
+
+      function sectionHeader(title, color) {
+        if (y > pageH - 40) { doc.addPage(); y = 20; }
+        doc.setFillColor(...color);
+        doc.rect(margin, y, 3, 5, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(30, 30, 28);
+        doc.text(title.toUpperCase(), margin + 6, y + 4);
+        y += 10;
+        doc.setDrawColor(230, 230, 225);
+        doc.setLineWidth(0.3);
+        doc.line(margin, y, pageW - margin, y);
+        y += 6;
+      }
+
+      // Summary
+      sectionHeader('Plain English Summary', [201, 168, 76]);
+      const summaryLines = doc.splitTextToSize(currentResult.summary, contentW - 10);
+      const boxH = summaryLines.length * 5.5 + 10;
+      if (y + boxH > pageH - 25) { doc.addPage(); y = 20; }
+      doc.setFillColor(252, 250, 245);
+      doc.setDrawColor(201, 168, 76);
+      doc.setLineWidth(0.4);
+      doc.roundedRect(margin, y, contentW, boxH, 2, 2, 'FD');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(50, 50, 48);
+      summaryLines.forEach((line, i) => doc.text(line, margin + 5, y + 7 + i * 5.5));
+      y += boxH + 10;
+
+      // Dates
+      sectionHeader('Key Dates', [82, 160, 224]);
+      if (currentResult.dates && currentResult.dates.length > 0) {
+        currentResult.dates.forEach(d => {
+          if (y > pageH - 30) { doc.addPage(); y = 20; }
+          const labelW = doc.getTextWidth(d.label) + 8;
+          doc.setFillColor(232, 244, 255);
+          doc.setDrawColor(82, 160, 224);
+          doc.setLineWidth(0.3);
+          doc.roundedRect(margin, y - 4, labelW, 6, 1, 1, 'FD');
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7.5);
+          doc.setTextColor(82, 160, 224);
+          doc.text(d.label, margin + 4, y);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(50, 50, 48);
+          const detailLines = doc.splitTextToSize(d.detail, contentW - labelW - 8);
+          detailLines.forEach((line, i) => {
+            if (y > pageH - 25) { doc.addPage(); y = 20; }
+            doc.text(line, margin + labelW + 4, y);
+            y += 5.5;
+          });
+          y += 2;
+        });
+      } else {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(136,136,128);
+        doc.text('No specific dates identified.', margin, y); y += 8;
+      }
+      y += 4;
+
+      // Obligations
+      sectionHeader('Obligations', [82, 200, 122]);
+      if (currentResult.obligations && currentResult.obligations.length > 0) {
+        currentResult.obligations.forEach(o => {
+          if (y > pageH - 30) { doc.addPage(); y = 20; }
+          doc.setFillColor(201, 168, 76);
+          doc.circle(margin + 2, y - 1.5, 1.2, 'F');
+          const lines = doc.splitTextToSize(o, contentW - 8);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(50, 50, 48);
+          lines.forEach(line => { if (y > pageH - 25) { doc.addPage(); y = 20; } doc.text(line, margin + 6, y); y += 5.5; });
+          y += 2;
+        });
+      } else {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(136,136,128);
+        doc.text('No obligations identified.', margin, y); y += 8;
+      }
+      y += 4;
+
+      // Risks
+      sectionHeader('Risk Assessment', [224, 82, 82]);
+      const riskColors = {
+        high:   { fill: [255,240,240], border: [224,82,82],   text: [224,82,82],   label: 'HIGH' },
+        medium: { fill: [255,246,237], border: [224,154,82],  text: [224,154,82],  label: 'MEDIUM' },
+        low:    { fill: [237,246,255], border: [82,160,224],  text: [82,160,224],  label: 'LOW' }
+      };
+      if (currentResult.risks && currentResult.risks.length > 0) {
+        currentResult.risks.forEach(risk => {
+          const c = riskColors[risk.severity] || riskColors.low;
+          const descLines = doc.splitTextToSize(risk.description, contentW - 28);
+          const riskBoxH = descLines.length * 5.5 + 10;
+          if (y + riskBoxH > pageH - 25) { doc.addPage(); y = 20; }
+          doc.setFillColor(...c.fill); doc.setDrawColor(...c.border); doc.setLineWidth(0.3);
+          doc.rect(margin, y, contentW, riskBoxH, 'FD');
+          doc.setFillColor(...c.border);
+          doc.rect(margin, y, 3, riskBoxH, 'F');
+          const badgeW = doc.getTextWidth(c.label) + 8;
+          doc.setFillColor(...c.border);
+          doc.roundedRect(margin + 7, y + 3, badgeW, 5, 1, 1, 'F');
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(255, 255, 255);
+          doc.text(c.label, margin + 11, y + 6.8);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(50, 50, 48);
+          descLines.forEach((line, i) => doc.text(line, margin + badgeW + 12, y + 7 + i * 5.5));
+          y += riskBoxH + 4;
+        });
+      } else {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(136,136,128);
+        doc.text('No risks identified.', margin, y);
+      }
+
+      // Footer on every page
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFillColor(245, 244, 240);
+        doc.rect(0, pageH - 12, pageW, 12, 'F');
+        doc.setFillColor(201, 168, 76);
+        doc.rect(0, pageH - 12, pageW, 0.5, 'F');
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(136, 136, 128);
+        doc.text('Generated by LexAI — Contract Intelligence', margin, pageH - 5);
+        doc.text(`Page ${i} of ${totalPages}`, pageW - margin, pageH - 5, { align: 'right' });
+        doc.text('This analysis is for informational purposes only and does not constitute legal advice.', pageW / 2, pageH - 5, { align: 'center' });
+      }
+
+      const safeName = currentFileName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      doc.save(`lexai_analysis_${safeName}.pdf`);
+
+    } catch (err) { alert('Export failed: ' + err.message); }
+    btn.textContent = '↓ Export PDF';
   }
 </script>
 </body>
