@@ -8,8 +8,8 @@
     { "src": "/api/analyze", "dest": "/api/analyze.js" },
     { "src": "/api/chat", "dest": "/api/chat.js" },
     { "src": "/app", "dest": "/public/app.html" },
+    { "src": "/dashboard", "dest": "/public/dashboard.html" },
     { "src": "/", "dest": "/public/landing.html" },
     { "src": "/(.*)", "dest": "/public/landing.html" }
-    { "src": "/dashboard", "dest": "/public/dashboard.html" }
   ]
 }
