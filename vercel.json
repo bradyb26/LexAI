@@ -7,8 +7,10 @@
   "routes": [
     { "src": "/api/analyze", "dest": "/api/analyze.js" },
     { "src": "/api/chat", "dest": "/api/chat.js" },
+    { "src": "/api/draft", "dest": "/api/draft.js" },
     { "src": "/app", "dest": "/public/app.html" },
     { "src": "/dashboard", "dest": "/public/dashboard.html" },
+    { "src": "/drafter", "dest": "/public/drafter.html" },
     { "src": "/", "dest": "/public/landing.html" },
     { "src": "/(.*)", "dest": "/public/landing.html" }
   ]
