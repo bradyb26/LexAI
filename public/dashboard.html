@@ -580,9 +580,9 @@
 
   <div class="sidebar-section">
     <div class="sidebar-section-label">Tools — Coming Soon</div>
-    <a href="#" class="nav-item locked" onclick="comingSoon(); return false;">
+    <a href="/drafter" target="_top" class="nav-item">
       <span class="nav-icon">✍️</span> Document Drafter
-      <span class="nav-badge badge-soon">Soon</span>
+      <span class="nav-badge badge-live">Live</span>
     </a>
     <a href="#" class="nav-item locked" onclick="comingSoon(); return false;">
       <span class="nav-icon">📋</span> Client Intake
@@ -698,15 +698,14 @@
         </div>
 
         <!-- Coming Soon -->
-        <div class="tool-card tool-locked">
-          <span class="lock-icon">🔒</span>
+        <div class="tool-card" onclick="window.top.location.href='/drafter'" style="cursor:pointer;">
           <div class="tool-card-top">
             <span class="tool-emoji">✍️</span>
-            <span class="tool-status status-soon">Coming Soon</span>
+            <span class="tool-status status-live">Live</span>
           </div>
           <div class="tool-name">Document Drafter</div>
           <div class="tool-desc">Generate first drafts of NDAs, service agreements, and other legal documents in seconds. Edit and download instantly.</div>
-          <div class="tool-action" style="color:var(--text-muted)">In Development</div>
+          <div class="tool-action">Open Tool →</div>
         </div>
 
         <div class="tool-card tool-locked">
@@ -787,20 +786,20 @@
             <div class="roadmap-status done">Done</div>
           </div>
           <div class="roadmap-item">
-            <div class="roadmap-dot dot-next"></div>
+            <div class="roadmap-dot dot-done"></div>
             <div class="roadmap-info">
               <div class="roadmap-name">Document Drafter</div>
               <div class="roadmap-desc">AI-generated legal document drafts</div>
             </div>
-            <div class="roadmap-status next">Up Next</div>
+            <div class="roadmap-status done">Done</div>
           </div>
           <div class="roadmap-item">
-            <div class="roadmap-dot dot-soon"></div>
+            <div class="roadmap-dot dot-next"></div>
             <div class="roadmap-info">
               <div class="roadmap-name">Client Intake</div>
               <div class="roadmap-desc">Automated pre-meeting client forms</div>
             </div>
-            <div class="roadmap-status">Planned</div>
+            <div class="roadmap-status next">Up Next</div>
           </div>
           <div class="roadmap-item">
             <div class="roadmap-dot dot-soon"></div>
