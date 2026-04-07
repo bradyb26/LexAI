@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LexAI — Document Drafter</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a08;
+      --surface: #111110;
+      --surface2: #1a1a18;
+      --border: #2a2a26;
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --text: #e8e8e0;
+      --text-muted: #888880;
+      --green: #52c87a;
+      --risk-high: #e05252;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+    header { padding: 1.5rem 3rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--surface); }
+
+    .header-left { display: flex; align-items: center; gap: 1.5rem; }
+
+    .back-btn { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .back-btn:hover { color: var(--gold); }
+
+    .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--gold); }
+    .logo span { color: var(--text-muted); font-size: 0.7rem; font-family: 'DM Mono', monospace; display: block; letter-spacing: 0.2em; text-transform: uppercase; }
+
+    .badge { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--gold); border: 1px solid var(--gold); padding: 0.25rem 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7; }
+
+    main { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem; }
+
+    .hero { margin-bottom: 2.5rem; }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.1; margin-bottom: 0.5rem; background: linear-gradient(135deg, var(--text) 0%, var(--gold-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero p { color: var(--text-muted); font-size: 1rem; font-weight: 300; }
+
+    /* Doc type selector */
+    .doc-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+
+    @media (max-width: 900px) { .doc-types { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .doc-types { grid-template-columns: 1fr; } }
+
+    .doc-type-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .doc-type-card:hover { border-color: var(--gold); background: rgba(201,168,76,0.04); }
+    .doc-type-card.selected { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+    .doc-type-card.selected::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--gold); }
+
+    .doc-type-icon { font-size: 1.4rem; margin-bottom: 0.6rem; display: block; }
+    .doc-type-name { font-size: 0.88rem; font-weight: 600; color: var(--text); margin-bottom: 0.3rem; }
+    .doc-type-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
+
+    /* Main workspace */
+    .workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 768px) { .workspace { grid-template-columns: 1fr; } }
+
+    .panel { background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; }
+
+    .panel-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .panel-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem; display: block; }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      padding: 0.65rem 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold); }
+    .form-input::placeholder, .form-textarea::placeholder { color: var(--text-muted); opacity: 0.5; }
+
+    .form-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888880' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; }
+    .form-select option { background: var(--surface2); }
+
+    .form-textarea { resize: vertical; min-height: 80px; font-family: 'DM Sans', sans-serif; line-height: 1.6; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+    .generate-btn { width: 100%; margin-top: 1.25rem; padding: 1rem; background: var(--gold); color: #0a0a08; border: none; font-family: 'DM Mono', monospace; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+    .generate-btn:hover { background: var(--gold-light); }
+    .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .generate-btn.loading .btn-text { display: none; }
+    .generate-btn.loading .spinner { display: block; }
+    .generate-btn .spinner { display: none; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+
+    /* Output panel */
+    .output-panel { display: flex; flex-direction: column; }
+    .output-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .output-header .panel-label { margin-bottom: 0; flex: 1; }
+
+    .export-btn { display: none; align-items: center; gap: 0.4rem; padding: 0.4rem 0.9rem; background: transparent; border: 1px solid var(--gold); color: var(--gold); font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+    .export-btn:hover { background: var(--gold); color: #000; }
+    .export-btn.visible { display: flex; }
+
+    .output-content { flex: 1; overflow-y: auto; height: 580px; padding-right: 0.25rem; }
+    .output-content::-webkit-scrollbar { width: 4px; }
+    .output-content::-webkit-scrollbar-track { background: var(--surface2); }
+    .output-content::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .placeholder { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; gap: 1rem; }
+    .placeholder-icon { font-size: 3rem; opacity: 0.2; }
+    .placeholder p { font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.1em; opacity: 0.5; }
+
+    .document-output {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.9;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      padding: 0.5rem;
+    }
+
+    .document-output .doc-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--gold); font-weight: 700; display: block; margin-bottom: 0.5rem; font-style: normal; }
+    .document-output .doc-section { color: var(--gold-light); font-weight: 500; }
+    .document-output .doc-blank { color: var(--risk-high); background: rgba(224,82,82,0.1); padding: 0 0.2rem; }
+
+    .error-msg { color: var(--risk-high); font-family: 'DM Mono', monospace; font-size: 0.8rem; padding: 1rem; border: 1px solid var(--risk-high); background: rgba(224,82,82,0.05); }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <a href="/dashboard" target="_top" class="back-btn">← Dashboard</a>
+    <div class="logo">LexAI<span>Document Drafter</span></div>
+  </div>
+  <div class="badge">Beta</div>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Draft Any Legal Document<br>in Seconds</h1>
+    <p>Choose a document type, fill in the details, and get a professional first draft instantly.</p>
+  </div>
+
+  <!-- Doc Type Selector -->
+  <div class="doc-types" id="docTypes">
+    <div class="doc-type-card selected" onclick="selectDocType(this, 'nda')">
+      <span class="doc-type-icon">🤝</span>
+      <div class="doc-type-name">NDA</div>
+      <div class="doc-type-desc">Non-Disclosure Agreement for confidential information</div>
+    </div>
+    <div class="doc-type-card" onclick="selectDocType(this, 'service')">
+      <span class="doc-type-icon">📋</span>
+      <div class="doc-type-name">Service Agreement</div>
+      <div class="doc-type-desc">Contract for professional services between parties</div>
+    </div>
+    <div class="doc-type-card" onclick="selectDocType(this, 'employment')">
+      <span class="doc-type-icon">👔</span>
+      <div class="doc-type-name">Employment Contract</div>
+      <div class="doc-type-desc">Agreement between employer and employee</div>
+    </div>
+    <div class="doc-type-card" onclick="selectDocType(this, 'freelance')">
+      <span class="doc-type-icon">💼</span>
+      <div class="doc-type-name">Freelance Contract</div>
+      <div class="doc-type-desc">Independent contractor agreement for project work</div>
+    </div>
+    <div class="doc-type-card" onclick="selectDocType(this, 'lease')">
+      <span class="doc-type-icon">🏢</span>
+      <div class="doc-type-name">Lease Agreement</div>
+      <div class="doc-type-desc">Rental agreement for commercial or residential property</div>
+    </div>
+    <div class="doc-type-card" onclick="selectDocType(this, 'partnership')">
+      <span class="doc-type-icon">🤜</span>
+      <div class="doc-type-name">Partnership Agreement</div>
+      <div class="doc-type-desc">Agreement between business partners</div>
+    </div>
+    <div class="doc-type-card" onclick="selectDocType(this, 'demand')">
+      <span class="doc-type-icon">⚠️</span>
+      <div class="doc-type-name">Demand Letter</div>
+      <div class="doc-type-desc">Formal letter demanding payment or action</div>
+    </div>
+    <div class="doc-type-card" onclick="selectDocType(this, 'termination')">
+      <span class="doc-type-icon">🚫</span>
+      <div class="doc-type-name">Termination Letter</div>
+      <div class="doc-type-desc">Formal notice of contract or employment termination</div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <!-- Input Form -->
+    <div class="panel">
+      <div class="panel-label">Document Details</div>
+      <div id="formContainer">
+        <!-- NDA Form (default) -->
+        <div id="form-nda">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Disclosing Party</label>
+              <input class="form-input" id="nda-party1" placeholder="Company or person name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Receiving Party</label>
+              <input class="form-input" id="nda-party2" placeholder="Company or person name" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Purpose of Disclosure</label>
+            <input class="form-input" id="nda-purpose" placeholder="e.g. Evaluating a potential business partnership" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Effective Date</label>
+              <input class="form-input" id="nda-date" type="date" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Duration (Years)</label>
+              <input class="form-input" id="nda-duration" placeholder="e.g. 2" type="number" min="1" max="10" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Governing State/Country</label>
+            <input class="form-input" id="nda-state" placeholder="e.g. Florida, USA" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Additional Terms (optional)</label>
+            <textarea class="form-textarea" id="nda-extra" placeholder="Any specific clauses or requirements..."></textarea>
+          </div>
+        </div>
+
+        <!-- Service Agreement Form -->
+        <div id="form-service" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Service Provider</label>
+              <input class="form-input" id="svc-provider" placeholder="Provider name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Client</label>
+              <input class="form-input" id="svc-client" placeholder="Client name" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Services to be Provided</label>
+            <textarea class="form-textarea" id="svc-services" placeholder="Describe the services in detail..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Start Date</label>
+              <input class="form-input" id="svc-start" type="date" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">End Date</label>
+              <input class="form-input" id="svc-end" type="date" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Payment Amount</label>
+              <input class="form-input" id="svc-payment" placeholder="e.g. $5,000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Payment Schedule</label>
+              <select class="form-select" id="svc-schedule">
+                <option>Monthly</option>
+                <option>Weekly</option>
+                <option>Upon completion</option>
+                <option>50% upfront, 50% on completion</option>
+                <option>Milestone-based</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Governing State/Country</label>
+            <input class="form-input" id="svc-state" placeholder="e.g. Florida, USA" />
+          </div>
+        </div>
+
+        <!-- Employment Form -->
+        <div id="form-employment" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Employer</label>
+              <input class="form-input" id="emp-employer" placeholder="Company name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Employee</label>
+              <input class="form-input" id="emp-employee" placeholder="Employee full name" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Job Title</label>
+              <input class="form-input" id="emp-title" placeholder="e.g. Senior Developer" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Start Date</label>
+              <input class="form-input" id="emp-start" type="date" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Annual Salary</label>
+              <input class="form-input" id="emp-salary" placeholder="e.g. $75,000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Employment Type</label>
+              <select class="form-select" id="emp-type">
+                <option>Full-time</option>
+                <option>Part-time</option>
+                <option>Contract</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Key Responsibilities</label>
+            <textarea class="form-textarea" id="emp-duties" placeholder="List main job responsibilities..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Governing State/Country</label>
+            <input class="form-input" id="emp-state" placeholder="e.g. Florida, USA" />
+          </div>
+        </div>
+
+        <!-- Freelance Form -->
+        <div id="form-freelance" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Contractor Name</label>
+              <input class="form-input" id="fl-contractor" placeholder="Freelancer name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Client Name</label>
+              <input class="form-input" id="fl-client" placeholder="Client name" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Project Description</label>
+            <textarea class="form-textarea" id="fl-project" placeholder="Describe the project and deliverables..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Project Fee</label>
+              <input class="form-input" id="fl-fee" placeholder="e.g. $3,000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Deadline</label>
+              <input class="form-input" id="fl-deadline" type="date" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Governing State/Country</label>
+            <input class="form-input" id="fl-state" placeholder="e.g. Florida, USA" />
+          </div>
+        </div>
+
+        <!-- Lease Form -->
+        <div id="form-lease" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Landlord</label>
+              <input class="form-input" id="ls-landlord" placeholder="Landlord name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tenant</label>
+              <input class="form-input" id="ls-tenant" placeholder="Tenant name" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Property Address</label>
+            <input class="form-input" id="ls-address" placeholder="Full property address" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Monthly Rent</label>
+              <input class="form-input" id="ls-rent" placeholder="e.g. $2,500" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Security Deposit</label>
+              <input class="form-input" id="ls-deposit" placeholder="e.g. $5,000" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Lease Start</label>
+              <input class="form-input" id="ls-start" type="date" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Lease End</label>
+              <input class="form-input" id="ls-end" type="date" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Partnership Form -->
+        <div id="form-partnership" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Partner 1</label>
+              <input class="form-input" id="pt-partner1" placeholder="First partner name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Partner 2</label>
+              <input class="form-input" id="pt-partner2" placeholder="Second partner name" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Business Name</label>
+            <input class="form-input" id="pt-business" placeholder="Partnership business name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Business Purpose</label>
+            <textarea class="form-textarea" id="pt-purpose" placeholder="Describe the nature of the business..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Partner 1 Share %</label>
+              <input class="form-input" id="pt-share1" placeholder="e.g. 50" type="number" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Partner 2 Share %</label>
+              <input class="form-input" id="pt-share2" placeholder="e.g. 50" type="number" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Governing State/Country</label>
+            <input class="form-input" id="pt-state" placeholder="e.g. Florida, USA" />
+          </div>
+        </div>
+
+        <!-- Demand Letter Form -->
+        <div id="form-demand" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Your Name / Firm</label>
+              <input class="form-input" id="dm-sender" placeholder="Your name or law firm" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Recipient</label>
+              <input class="form-input" id="dm-recipient" placeholder="Who you are sending to" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Amount Owed / Demand</label>
+            <input class="form-input" id="dm-amount" placeholder="e.g. $10,000" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Reason for Demand</label>
+            <textarea class="form-textarea" id="dm-reason" placeholder="Explain what is owed and why..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Response Deadline</label>
+              <input class="form-input" id="dm-deadline" type="date" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Governing State</label>
+              <input class="form-input" id="dm-state" placeholder="e.g. Florida" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Termination Form -->
+        <div id="form-termination" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Sender</label>
+              <input class="form-input" id="tm-sender" placeholder="Your name or company" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Recipient</label>
+              <input class="form-input" id="tm-recipient" placeholder="Name being terminated" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">What is Being Terminated</label>
+            <select class="form-select" id="tm-type">
+              <option>Employment</option>
+              <option>Service Agreement</option>
+              <option>Lease</option>
+              <option>Contract</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Termination Date</label>
+              <input class="form-input" id="tm-date" type="date" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notice Period</label>
+              <input class="form-input" id="tm-notice" placeholder="e.g. 30 days" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Reason (optional)</label>
+            <textarea class="form-textarea" id="tm-reason" placeholder="State the reason for termination..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <button class="generate-btn" id="generateBtn" onclick="generateDocument()">
+        <span class="btn-text">Generate Document</span>
+        <div class="spinner"></div>
+      </button>
+    </div>
+
+    <!-- Output Panel -->
+    <div class="panel output-panel">
+      <div class="output-header">
+        <div class="panel-label">Generated Document</div>
+        <button class="export-btn" id="exportBtn" onclick="exportToPDF()">↓ Export PDF</button>
+      </div>
+      <div class="output-content" id="outputContent">
+        <div class="placeholder">
+          <div class="placeholder-icon">✍️</div>
+          <p>Fill in the details and click<br>Generate Document to begin</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  let selectedDocType = 'nda';
+  let generatedText = '';
+
+  function selectDocType(card, type) {
+    document.querySelectorAll('.doc-type-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    document.querySelectorAll('[id^="form-"]').forEach(f => f.style.display = 'none');
+    document.getElementById('form-' + type).style.display = 'block';
+    selectedDocType = type;
+  }
+
+  function getFormData() {
+    const d = {};
+    switch(selectedDocType) {
+      case 'nda':
+        d.party1 = document.getElementById('nda-party1').value;
+        d.party2 = document.getElementById('nda-party2').value;
+        d.purpose = document.getElementById('nda-purpose').value;
+        d.date = document.getElementById('nda-date').value;
+        d.duration = document.getElementById('nda-duration').value;
+        d.state = document.getElementById('nda-state').value;
+        d.extra = document.getElementById('nda-extra').value;
+        break;
+      case 'service':
+        d.provider = document.getElementById('svc-provider').value;
+        d.client = document.getElementById('svc-client').value;
+        d.services = document.getElementById('svc-services').value;
+        d.start = document.getElementById('svc-start').value;
+        d.end = document.getElementById('svc-end').value;
+        d.payment = document.getElementById('svc-payment').value;
+        d.schedule = document.getElementById('svc-schedule').value;
+        d.state = document.getElementById('svc-state').value;
+        break;
+      case 'employment':
+        d.employer = document.getElementById('emp-employer').value;
+        d.employee = document.getElementById('emp-employee').value;
+        d.title = document.getElementById('emp-title').value;
+        d.start = document.getElementById('emp-start').value;
+        d.salary = document.getElementById('emp-salary').value;
+        d.type = document.getElementById('emp-type').value;
+        d.duties = document.getElementById('emp-duties').value;
+        d.state = document.getElementById('emp-state').value;
+        break;
+      case 'freelance':
+        d.contractor = document.getElementById('fl-contractor').value;
+        d.client = document.getElementById('fl-client').value;
+        d.project = document.getElementById('fl-project').value;
+        d.fee = document.getElementById('fl-fee').value;
+        d.deadline = document.getElementById('fl-deadline').value;
+        d.state = document.getElementById('fl-state').value;
+        break;
+      case 'lease':
+        d.landlord = document.getElementById('ls-landlord').value;
+        d.tenant = document.getElementById('ls-tenant').value;
+        d.address = document.getElementById('ls-address').value;
+        d.rent = document.getElementById('ls-rent').value;
+        d.deposit = document.getElementById('ls-deposit').value;
+        d.start = document.getElementById('ls-start').value;
+        d.end = document.getElementById('ls-end').value;
+        break;
+      case 'partnership':
+        d.partner1 = document.getElementById('pt-partner1').value;
+        d.partner2 = document.getElementById('pt-partner2').value;
+        d.business = document.getElementById('pt-business').value;
+        d.purpose = document.getElementById('pt-purpose').value;
+        d.share1 = document.getElementById('pt-share1').value;
+        d.share2 = document.getElementById('pt-share2').value;
+        d.state = document.getElementById('pt-state').value;
+        break;
+      case 'demand':
+        d.sender = document.getElementById('dm-sender').value;
+        d.recipient = document.getElementById('dm-recipient').value;
+        d.amount = document.getElementById('dm-amount').value;
+        d.reason = document.getElementById('dm-reason').value;
+        d.deadline = document.getElementById('dm-deadline').value;
+        d.state = document.getElementById('dm-state').value;
+        break;
+      case 'termination':
+        d.sender = document.getElementById('tm-sender').value;
+        d.recipient = document.getElementById('tm-recipient').value;
+        d.type = document.getElementById('tm-type').value;
+        d.date = document.getElementById('tm-date').value;
+        d.notice = document.getElementById('tm-notice').value;
+        d.reason = document.getElementById('tm-reason').value;
+        break;
+    }
+    return d;
+  }
+
+  function buildPrompt(type, data) {
+    const typeNames = {
+      nda: 'Non-Disclosure Agreement',
+      service: 'Service Agreement',
+      employment: 'Employment Contract',
+      freelance: 'Freelance/Independent Contractor Agreement',
+      lease: 'Lease Agreement',
+      partnership: 'Partnership Agreement',
+      demand: 'Demand Letter',
+      termination: 'Termination Letter'
+    };
+
+    return `You are an expert legal document drafter. Generate a professional, complete, and legally sound ${typeNames[type]} based on the following details. Use proper legal language and structure. Include all standard clauses for this document type. Format it clearly with numbered sections. Here are the details:\n\n${JSON.stringify(data, null, 2)}\n\nGenerate the full document now. Use [BLANK] for any fields that were left empty but are required.`;
+  }
+
+  async function generateDocument() {
+    const data = getFormData();
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = true;
+    btn.classList.add('loading');
+    document.getElementById('exportBtn').classList.remove('visible');
+
+    document.getElementById('outputContent').innerHTML = `<div class="placeholder"><div class="placeholder-icon" style="animation:spin 1.5s linear infinite;display:inline-block">⚙</div><p>Drafting your document...</p></div>`;
+
+    try {
+      const response = await fetch('/api/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ docType: selectedDocType, data, prompt: buildPrompt(selectedDocType, data) })
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Something went wrong');
+
+      generatedText = result.document;
+      renderDocument(result.document);
+      document.getElementById('exportBtn').classList.add('visible');
+
+    } catch (err) {
+      document.getElementById('outputContent').innerHTML = `<div class="error-msg">Error: ${err.message}</div>`;
+    }
+
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }
+
+  function renderDocument(text) {
+    const lines = text.split('\n');
+    let html = '<div class="document-output">';
+    lines.forEach(line => {
+      if (line.match(/^[A-Z][A-Z\s\-]+[A-Z]$/) || line.match(/^NON-DISCLOSURE|^SERVICE AGREEMENT|^EMPLOYMENT|^FREELANCE|^LEASE|^PARTNERSHIP|^DEMAND|^TERMINATION/i)) {
+        html += `<span class="doc-title">${line}</span>\n`;
+      } else if (line.match(/^\d+\.|^[A-Z]+\./)) {
+        html += `<span class="doc-section">${line}</span>\n`;
+      } else if (line.includes('[BLANK]')) {
+        html += line.replace(/\[BLANK\]/g, '<span class="doc-blank">[BLANK]</span>') + '\n';
+      } else {
+        html += line + '\n';
+      }
+    });
+    html += '</div>';
+    document.getElementById('outputContent').innerHTML = html;
+  }
+
+  function exportToPDF() {
+    if (!generatedText) return;
+    const btn = document.getElementById('exportBtn');
+    btn.textContent = 'Generating...';
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const contentW = pageW - margin * 2;
+      let y = 0;
+
+      // Header
+      doc.setFillColor(10, 10, 8);
+      doc.rect(0, 0, pageW, 38, 'F');
+      doc.setFillColor(201, 168, 76);
+      doc.rect(0, 38, pageW, 1.2, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(201, 168, 76);
+      doc.text('LexAI', margin, 20);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(136, 136, 128);
+      doc.text('DOCUMENT DRAFTER', margin, 27);
+      const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.text(`Generated: ${dateStr}`, pageW - margin, 20, { align: 'right' });
+      doc.text('DRAFT — NOT LEGAL ADVICE', pageW - margin, 27, { align: 'right' });
+      y = 50;
+
+      // Document content
+      const lines = generatedText.split('\n');
+      lines.forEach(line => {
+        if (y > pageH - 20) { doc.addPage(); y = 20; }
+        if (!line.trim()) { y += 4; return; }
+
+        if (line.match(/^[A-Z][A-Z\s\-]+[A-Z]$/) || line.match(/^NON-DISCLOSURE|^SERVICE AGREEMENT|^EMPLOYMENT|^FREELANCE|^LEASE|^PARTNERSHIP|^DEMAND|^TERMINATION/i)) {
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(201, 168, 76);
+          const wrapped = doc.splitTextToSize(line, contentW);
+          wrapped.forEach(l => { if (y > pageH - 20) { doc.addPage(); y = 20; } doc.text(l, margin, y); y += 7; });
+          y += 2;
+        } else if (line.match(/^\d+\./)) {
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(30, 30, 28);
+          const wrapped = doc.splitTextToSize(line, contentW);
+          wrapped.forEach(l => { if (y > pageH - 20) { doc.addPage(); y = 20; } doc.text(l, margin, y); y += 5.5; });
+          y += 1;
+        } else {
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(50, 50, 48);
+          const wrapped = doc.splitTextToSize(line, contentW);
+          wrapped.forEach(l => { if (y > pageH - 20) { doc.addPage(); y = 20; } doc.text(l, margin, y); y += 5.5; });
+        }
+      });
+
+      // Footer
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFillColor(245, 244, 240); doc.rect(0, pageH - 12, pageW, 12, 'F');
+        doc.setFillColor(201, 168, 76); doc.rect(0, pageH - 12, pageW, 0.5, 'F');
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(136, 136, 128);
+        doc.text('Generated by LexAI — Document Drafter', margin, pageH - 5);
+        doc.text(`Page ${i} of ${totalPages}`, pageW - margin, pageH - 5, { align: 'right' });
+        doc.text('DRAFT ONLY — Review with qualified legal counsel before use.', pageW / 2, pageH - 5, { align: 'center' });
+      }
+
+      doc.save(`lexai_draft_${selectedDocType}_${Date.now()}.pdf`);
+    } catch (err) { alert('Export failed: ' + err.message); }
+    btn.textContent = '↓ Export PDF';
+  }
+</script>
+</body>
+</html>
