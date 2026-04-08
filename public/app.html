@@ -82,6 +82,82 @@
     .risk-item.low .risk-badge { color: var(--risk-low); background: rgba(82,160,224,0.1); }
     .error-msg { color: var(--risk-high); font-family: 'DM Mono', monospace; font-size: 0.8rem; padding: 1rem; border: 1px solid var(--risk-high); background: rgba(224,82,82,0.05); }
 
+    /* Risk Score Banner */
+    .risk-score-banner {
+      display: flex; gap: 1.5rem; align-items: flex-start;
+      padding: 1rem 1.25rem; border: 1px solid; border-left-width: 4px;
+      background: var(--surface2); margin-bottom: 1.5rem;
+    }
+    .risk-score-left { flex-shrink: 0; text-align: center; }
+    .risk-score-num { font-family: 'Playfair Display', serif; font-size: 2.2rem; line-height: 1; font-weight: 700; }
+    .risk-score-num span { font-size: 1rem; color: var(--text-muted); }
+    .risk-score-label { font-family: 'DM Mono', monospace; font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-top: 0.2rem; }
+    .risk-score-summary { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* Parties */
+    .parties-grid { display: flex; flex-direction: column; gap: 0.75rem; }
+    .party-item { background: var(--surface2); border: 1px solid var(--border); padding: 0.9rem 1rem; }
+    .party-name { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 0.3rem; }
+    .party-role-badge { display: inline-block; font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(201,168,76,0.3); padding: 0.1rem 0.4rem; margin-bottom: 0.4rem; }
+    .party-detail { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.3rem; }
+    .party-obligations { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; font-style: italic; }
+
+    /* Financials */
+    .financial-item { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 0.9rem 1rem; margin-bottom: 0.6rem; }
+    .financial-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; gap: 0.5rem; }
+    .financial-label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    .financial-amount { font-family: 'DM Mono', monospace; font-size: 0.85rem; color: var(--gold); font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+    .financial-detail { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* Obligations new */
+    .obligation-item-new { padding: 0.75rem; background: var(--surface2); border: 1px solid var(--border); margin-bottom: 0.5rem; }
+    .obligation-party-tag { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.3rem; }
+    .obligation-text { font-size: 0.85rem; color: var(--text); line-height: 1.5; margin-bottom: 0.3rem; }
+    .obligation-consequence { font-size: 0.75rem; color: var(--risk-med); line-height: 1.4; margin-top: 0.3rem; }
+
+    /* Rights */
+    .right-item { padding: 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--green); margin-bottom: 0.5rem; }
+    .right-party { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); margin-bottom: 0.3rem; }
+    .right-text { font-size: 0.85rem; color: var(--text); line-height: 1.5; }
+    .right-conditions { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.3rem; font-style: italic; }
+
+    /* Termination */
+    .term-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .term-item { background: var(--surface2); border: 1px solid var(--border); padding: 0.75rem; }
+    .term-item.full { grid-column: span 2; }
+    .term-label { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.3rem; }
+    .term-value { font-size: 0.82rem; color: var(--text); line-height: 1.5; }
+
+    /* Governing law */
+    .gov-grid { display: flex; flex-direction: column; gap: 0.6rem; }
+    .gov-item { background: var(--surface2); border: 1px solid var(--border); padding: 0.75rem; }
+    .gov-label { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.3rem; }
+    .gov-value { font-size: 0.82rem; color: var(--text); line-height: 1.5; }
+
+    /* Risks new */
+    .risk-item-new { margin-bottom: 0.75rem; padding: 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--border); }
+    .risk-item-new.critical, .risk-item-new.high { border-left-color: var(--risk-high); }
+    .risk-item-new.medium { border-left-color: var(--risk-med); }
+    .risk-item-new.low { border-left-color: var(--risk-low); }
+    .risk-item-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+    .risk-badge-new { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; font-weight: 600; }
+    .risk-category { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.08em; color: var(--text-muted); border: 1px solid var(--border); padding: 0.1rem 0.35rem; }
+    .risk-title { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+    .risk-description { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.4rem; }
+    .risk-recommendation { font-size: 0.78rem; color: var(--gold); line-height: 1.5; padding: 0.4rem 0.6rem; background: rgba(201,168,76,0.06); border-left: 2px solid var(--gold); margin-top: 0.4rem; }
+
+    /* Missing clauses */
+    .missing-item { margin-bottom: 0.6rem; padding: 0.75rem; background: var(--surface2); border: 1px solid var(--border); }
+    .missing-item.high { border-left: 3px solid var(--risk-high); }
+    .missing-item.medium { border-left: 3px solid var(--risk-med); }
+    .missing-item.low { border-left: 3px solid var(--risk-low); }
+    .missing-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+    .missing-badge { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.1em; color: var(--risk-med); }
+    .missing-item.high .missing-badge { color: var(--risk-high); }
+    .missing-item.low .missing-badge { color: var(--text-muted); }
+    .missing-name { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    .missing-explanation { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
+
     /* Chat */
     .chat-section { display: none; border-top: 1px solid var(--border); padding-top: 1rem; }
     .chat-section.visible { display: block; }
@@ -259,14 +335,152 @@
   }
 
   function renderResults(r) {
-    const datesHtml = (r.dates||[]).map(d=>`<div class="date-item"><span class="date-label">${d.label}</span><span>${d.detail}</span></div>`).join('');
-    const obligationsHtml = (r.obligations||[]).map(o=>`<div class="obligation-item"><div class="obligation-dot"></div><span>${o}</span></div>`).join('');
-    const risksHtml = (r.risks||[]).map(risk=>`<div class="risk-item ${risk.severity}"><span class="risk-badge">${risk.severity}</span><span>${risk.description}</span></div>`).join('');
+
+    // Risk score color
+    const scoreColor = r.overall_risk_score >= 8 ? 'var(--risk-high)' : r.overall_risk_score >= 5 ? 'var(--risk-med)' : 'var(--green)';
+
+    // Parties
+    const partiesHtml = (r.parties||[]).map(p=>`
+      <div class="party-item">
+        <div class="party-name">${p.name}</div>
+        <div class="party-role-badge">${p.role}</div>
+        <div class="party-detail">${p.jurisdiction || ''}</div>
+        <div class="party-obligations">${p.obligations_summary || ''}</div>
+      </div>`).join('');
+
+    // Dates
+    const datesHtml = (r.dates||[]).map(d=>`
+      <div class="date-item">
+        <span class="date-label">${d.label}</span>
+        <span>${d.detail}</span>
+      </div>`).join('');
+
+    // Financials
+    const financialsHtml = (r.financials||[]).map(f=>`
+      <div class="financial-item">
+        <div class="financial-top">
+          <span class="financial-label">${f.label}</span>
+          <span class="financial-amount">${f.amount}</span>
+        </div>
+        <div class="financial-detail">${f.detail}</div>
+      </div>`).join('');
+
+    // Obligations
+    const obligationsHtml = (r.obligations||[]).map(o=>`
+      <div class="obligation-item-new">
+        <div class="obligation-party-tag">${o.party || ''}</div>
+        <div class="obligation-text">${o.obligation || o}</div>
+        ${o.consequence ? `<div class="obligation-consequence">⚠ ${o.consequence}</div>` : ''}
+      </div>`).join('');
+
+    // Rights
+    const rightsHtml = (r.rights||[]).map(right=>`
+      <div class="right-item">
+        <div class="right-party">${right.party}</div>
+        <div class="right-text">${right.right}</div>
+        ${right.conditions ? `<div class="right-conditions">${right.conditions}</div>` : ''}
+      </div>`).join('');
+
+    // Termination
+    const term = r.termination || {};
+    const terminationHtml = `
+      <div class="term-grid">
+        ${term.initial_term ? `<div class="term-item"><div class="term-label">Initial Term</div><div class="term-value">${term.initial_term}</div></div>` : ''}
+        ${term.renewal ? `<div class="term-item"><div class="term-label">Renewal</div><div class="term-value">${term.renewal}</div></div>` : ''}
+        ${term.notice_period ? `<div class="term-item"><div class="term-label">Notice Period</div><div class="term-value">${term.notice_period}</div></div>` : ''}
+        ${term.termination_for_cause ? `<div class="term-item"><div class="term-label">For Cause</div><div class="term-value">${term.termination_for_cause}</div></div>` : ''}
+        ${term.termination_for_convenience ? `<div class="term-item"><div class="term-label">For Convenience</div><div class="term-value">${term.termination_for_convenience}</div></div>` : ''}
+        ${term.post_termination ? `<div class="term-item full"><div class="term-label">Survives Termination</div><div class="term-value">${term.post_termination}</div></div>` : ''}
+      </div>`;
+
+    // Risks
+    const riskColors = { critical: 'var(--risk-high)', high: 'var(--risk-high)', medium: 'var(--risk-med)', low: 'var(--risk-low)' };
+    const risksHtml = (r.risks||[]).map(risk=>`
+      <div class="risk-item-new ${risk.severity}">
+        <div class="risk-item-header">
+          <span class="risk-badge-new" style="color:${riskColors[risk.severity]||'var(--risk-low)'}">${(risk.severity||'').toUpperCase()}</span>
+          <span class="risk-category">${risk.category || ''}</span>
+          <span class="risk-title">${risk.title || ''}</span>
+        </div>
+        <div class="risk-description">${risk.description}</div>
+        ${risk.recommendation ? `<div class="risk-recommendation">💡 ${risk.recommendation}</div>` : ''}
+      </div>`).join('');
+
+    // Missing clauses
+    const missingHtml = (r.missing_clauses||[]).map(m=>`
+      <div class="missing-item ${m.importance}">
+        <div class="missing-header">
+          <span class="missing-badge">${(m.importance||'').toUpperCase()}</span>
+          <span class="missing-name">${m.clause}</span>
+        </div>
+        <div class="missing-explanation">${m.explanation}</div>
+      </div>`).join('');
+
+    // Governing law
+    const gov = r.governing_law || {};
+    const govHtml = gov.jurisdiction ? `
+      <div class="gov-grid">
+        <div class="gov-item"><div class="gov-label">Governing Law</div><div class="gov-value">${gov.jurisdiction}</div></div>
+        <div class="gov-item"><div class="gov-label">Dispute Resolution</div><div class="gov-value">${gov.dispute_resolution || 'Not specified'}</div></div>
+        <div class="gov-item"><div class="gov-label">Venue</div><div class="gov-value">${gov.venue || 'Not specified'}</div></div>
+      </div>` : '<p style="color:var(--text-muted);font-size:0.85rem">Not specified.</p>';
+
     document.getElementById('resultsContent').innerHTML = `
-      <div class="result-section"><div class="result-section-title">Plain English Summary</div><p class="summary-text">${r.summary}</p></div>
-      <div class="result-section"><div class="result-section-title">Key Dates</div>${datesHtml||'<p style="color:var(--text-muted);font-size:0.85rem">No specific dates found.</p>'}</div>
-      <div class="result-section"><div class="result-section-title">Obligations</div>${obligationsHtml||'<p style="color:var(--text-muted);font-size:0.85rem">No obligations found.</p>'}</div>
-      <div class="result-section"><div class="result-section-title">Risks</div>${risksHtml||'<p style="color:var(--text-muted);font-size:0.85rem">No risks identified.</p>'}</div>`;
+
+      <!-- Risk Score Banner -->
+      <div class="risk-score-banner" style="border-color:${scoreColor}">
+        <div class="risk-score-left">
+          <div class="risk-score-num" style="color:${scoreColor}">${r.overall_risk_score || '—'}<span>/10</span></div>
+          <div class="risk-score-label">Overall Risk Score</div>
+        </div>
+        <div class="risk-score-summary">${r.overall_risk_summary || ''}</div>
+      </div>
+
+      <!-- Summary -->
+      <div class="result-section">
+        <div class="result-section-title">Executive Summary</div>
+        <p class="summary-text">${r.summary}</p>
+      </div>
+
+      <!-- Parties -->
+      ${partiesHtml ? `<div class="result-section"><div class="result-section-title">Parties</div><div class="parties-grid">${partiesHtml}</div></div>` : ''}
+
+      <!-- Financials -->
+      ${financialsHtml ? `<div class="result-section"><div class="result-section-title">💰 Financial Terms</div>${financialsHtml}</div>` : ''}
+
+      <!-- Key Dates -->
+      <div class="result-section">
+        <div class="result-section-title">📅 Key Dates & Deadlines</div>
+        ${datesHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No specific dates found.</p>'}
+      </div>
+
+      <!-- Obligations -->
+      <div class="result-section">
+        <div class="result-section-title">📋 Obligations</div>
+        ${obligationsHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No obligations found.</p>'}
+      </div>
+
+      <!-- Rights -->
+      ${rightsHtml ? `<div class="result-section"><div class="result-section-title">✅ Rights & Entitlements</div>${rightsHtml}</div>` : ''}
+
+      <!-- Termination -->
+      ${term.initial_term ? `<div class="result-section"><div class="result-section-title">🔚 Term & Termination</div>${terminationHtml}</div>` : ''}
+
+      <!-- Governing Law -->
+      <div class="result-section">
+        <div class="result-section-title">⚖ Governing Law & Disputes</div>
+        ${govHtml}
+      </div>
+
+      <!-- Risks -->
+      <div class="result-section">
+        <div class="result-section-title">🚨 Risk Assessment</div>
+        ${risksHtml || '<p style="color:var(--text-muted);font-size:0.85rem">No risks identified.</p>'}
+      </div>
+
+      <!-- Missing Clauses -->
+      ${missingHtml ? `<div class="result-section"><div class="result-section-title">⚠ Missing or Weak Clauses</div>${missingHtml}</div>` : ''}
+    `;
   }
 
   function askSuggestion(btn) {
