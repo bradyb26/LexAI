@@ -539,41 +539,272 @@
     const btn = document.getElementById('exportBtn');
     btn.textContent = 'Generating...';
     try {
+      const r = currentResult;
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
       const margin = 20, contentW = pageW - margin * 2;
       let y = 0;
+
+      // ── Header ──
       doc.setFillColor(10,10,8); doc.rect(0,0,pageW,38,'F');
       doc.setFillColor(201,168,76); doc.rect(0,38,pageW,1.2,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor(201,168,76); doc.text('LexAI',margin,20);
       doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(136,136,128);
       doc.text('CONTRACT INTELLIGENCE',margin,27);
       const dateStr = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-      doc.text(`Generated: ${dateStr}`,pageW-margin,20,{align:'right'}); doc.text('CONFIDENTIAL',pageW-margin,27,{align:'right'});
-      y=52;
-      doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(30,30,28); doc.text('Contract Analysis Report',margin,y); y+=6;
-      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(136,136,128); doc.text(currentFileName,margin,y); y+=12;
-      doc.setDrawColor(220,220,215); doc.setLineWidth(0.4); doc.line(margin,y,pageW-margin,y); y+=10;
-      function sh(title,color) { if(y>pageH-40){doc.addPage();y=20;} doc.setFillColor(...color); doc.rect(margin,y,3,5,'F'); doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(30,30,28); doc.text(title.toUpperCase(),margin+6,y+4); y+=10; doc.setDrawColor(230,230,225); doc.setLineWidth(0.3); doc.line(margin,y,pageW-margin,y); y+=6; }
-      sh('Plain English Summary',[201,168,76]);
-      const sl=doc.splitTextToSize(currentResult.summary,contentW-10), bh=sl.length*5.5+10;
-      if(y+bh>pageH-25){doc.addPage();y=20;} doc.setFillColor(252,250,245); doc.setDrawColor(201,168,76); doc.setLineWidth(0.4); doc.roundedRect(margin,y,contentW,bh,2,2,'FD');
-      doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(50,50,48); sl.forEach((l,i)=>doc.text(l,margin+5,y+7+i*5.5)); y+=bh+10;
-      sh('Key Dates',[82,160,224]);
-      if(currentResult.dates&&currentResult.dates.length>0){currentResult.dates.forEach(d=>{if(y>pageH-30){doc.addPage();y=20;} const lw=doc.getTextWidth(d.label)+8; doc.setFillColor(232,244,255); doc.setDrawColor(82,160,224); doc.setLineWidth(0.3); doc.roundedRect(margin,y-4,lw,6,1,1,'FD'); doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(82,160,224); doc.text(d.label,margin+4,y); doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(50,50,48); const dl=doc.splitTextToSize(d.detail,contentW-lw-8); dl.forEach(l=>{if(y>pageH-25){doc.addPage();y=20;} doc.text(l,margin+lw+4,y); y+=5.5;}); y+=2;});}
-      else{doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(136,136,128);doc.text('No specific dates identified.',margin,y);y+=8;} y+=4;
-      sh('Obligations',[82,200,122]);
-      if(currentResult.obligations&&currentResult.obligations.length>0){currentResult.obligations.forEach(o=>{if(y>pageH-30){doc.addPage();y=20;} doc.setFillColor(201,168,76); doc.circle(margin+2,y-1.5,1.2,'F'); const ls=doc.splitTextToSize(o,contentW-8); doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(50,50,48); ls.forEach(l=>{if(y>pageH-25){doc.addPage();y=20;} doc.text(l,margin+6,y);y+=5.5;}); y+=2;});}
-      else{doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(136,136,128);doc.text('No obligations identified.',margin,y);y+=8;} y+=4;
-      sh('Risk Assessment',[224,82,82]);
-      const rc={high:{fill:[255,240,240],border:[224,82,82],label:'HIGH'},medium:{fill:[255,246,237],border:[224,154,82],label:'MEDIUM'},low:{fill:[237,246,255],border:[82,160,224],label:'LOW'}};
-      if(currentResult.risks&&currentResult.risks.length>0){currentResult.risks.forEach(risk=>{const c=rc[risk.severity]||rc.low; const dl=doc.splitTextToSize(risk.description,contentW-28); const rh=dl.length*5.5+10; if(y+rh>pageH-25){doc.addPage();y=20;} doc.setFillColor(...c.fill);doc.setDrawColor(...c.border);doc.setLineWidth(0.3);doc.rect(margin,y,contentW,rh,'FD'); doc.setFillColor(...c.border);doc.rect(margin,y,3,rh,'F'); const bw=doc.getTextWidth(c.label)+8; doc.setFillColor(...c.border);doc.roundedRect(margin+7,y+3,bw,5,1,1,'F'); doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(255,255,255);doc.text(c.label,margin+11,y+6.8); doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(50,50,48); dl.forEach((l,i)=>doc.text(l,margin+bw+12,y+7+i*5.5)); y+=rh+4;});}
-      else{doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(136,136,128);doc.text('No risks identified.',margin,y);}
-      const tp=doc.internal.getNumberOfPages();
-      for(let i=1;i<=tp;i++){doc.setPage(i); doc.setFillColor(245,244,240);doc.rect(0,pageH-12,pageW,12,'F'); doc.setFillColor(201,168,76);doc.rect(0,pageH-12,pageW,0.5,'F'); doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(136,136,128); doc.text('Generated by LexAI — Contract Intelligence',margin,pageH-5); doc.text(`Page ${i} of ${tp}`,pageW-margin,pageH-5,{align:'right'}); doc.text('This analysis is for informational purposes only and does not constitute legal advice.',pageW/2,pageH-5,{align:'center'});}
+      doc.text(`Generated: ${dateStr}`,pageW-margin,20,{align:'right'});
+      doc.text('CONFIDENTIAL',pageW-margin,27,{align:'right'});
+      y = 52;
+
+      // ── Title ──
+      doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(30,30,28);
+      doc.text('Contract Analysis Report',margin,y); y+=6;
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(136,136,128);
+      doc.text(currentFileName,margin,y); y+=8;
+
+      // ── Risk Score ──
+      if (r.overall_risk_score) {
+        const scoreColor = r.overall_risk_score >= 8 ? [224,82,82] : r.overall_risk_score >= 5 ? [224,154,82] : [82,200,122];
+        doc.setFillColor(245,244,240); doc.rect(margin,y,contentW,14,'F');
+        doc.setFillColor(...scoreColor); doc.rect(margin,y,3,14,'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(...scoreColor);
+        doc.text(`${r.overall_risk_score}/10`,margin+8,y+10);
+        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(136,136,128);
+        doc.text('OVERALL RISK SCORE',margin+30,y+5);
+        if (r.overall_risk_summary) {
+          const sl = doc.splitTextToSize(r.overall_risk_summary, contentW-35);
+          doc.setFontSize(8); doc.setTextColor(80,80,78);
+          sl.slice(0,2).forEach((l,i) => doc.text(l, margin+30, y+10+i*4));
+        }
+        y += 20;
+      }
+
+      doc.setDrawColor(220,220,215); doc.setLineWidth(0.4); doc.line(margin,y,pageW-margin,y); y+=8;
+
+      // ── Helper functions ──
+      function newPageIfNeeded(space=30) { if(y>pageH-space){doc.addPage();y=20;} }
+      function sectionHeader(title, color=[201,168,76]) {
+        newPageIfNeeded(40);
+        doc.setFillColor(...color); doc.rect(margin,y,3,5,'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(30,30,28);
+        doc.text(title.toUpperCase(),margin+6,y+4); y+=10;
+        doc.setDrawColor(230,230,225); doc.setLineWidth(0.3);
+        doc.line(margin,y,pageW-margin,y); y+=5;
+      }
+      function bodyText(text, indent=0, color=[50,50,48]) {
+        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...color);
+        const lines = doc.splitTextToSize(text, contentW-indent);
+        lines.forEach(l => { newPageIfNeeded(15); doc.text(l,margin+indent,y); y+=5; });
+        y+=1;
+      }
+      function label(text) {
+        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(136,136,128);
+        doc.text(text.toUpperCase(), margin, y); y+=4;
+      }
+
+      // ── Summary ──
+      sectionHeader('Executive Summary', [201,168,76]);
+      const sl = doc.splitTextToSize(r.summary||'', contentW-6);
+      const bh = sl.length*5+10;
+      newPageIfNeeded(bh+10);
+      doc.setFillColor(252,250,245); doc.setDrawColor(201,168,76); doc.setLineWidth(0.4);
+      doc.roundedRect(margin,y,contentW,bh,2,2,'FD');
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(50,50,48);
+      sl.forEach((l,i) => doc.text(l,margin+4,y+7+i*5)); y+=bh+8;
+
+      // ── Parties ──
+      if (r.parties && r.parties.length > 0) {
+        sectionHeader('Parties', [82,120,200]);
+        r.parties.forEach(p => {
+          newPageIfNeeded(25);
+          doc.setFillColor(248,248,252); doc.rect(margin,y,contentW,22,'F');
+          doc.setDrawColor(200,200,210); doc.setLineWidth(0.3); doc.rect(margin,y,contentW,22,'D');
+          doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(30,30,28);
+          doc.text(p.name||'', margin+3, y+6);
+          doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(201,168,76);
+          doc.text((p.role||'').toUpperCase(), margin+3, y+11);
+          doc.setTextColor(136,136,128);
+          doc.text(p.jurisdiction||'', margin+3, y+16);
+          if (p.obligations_summary) {
+            const ol = doc.splitTextToSize(p.obligations_summary, contentW-6);
+            doc.setFontSize(7.5); doc.setTextColor(80,80,78);
+            doc.text(ol[0]||'', margin+3, y+20);
+          }
+          y += 25;
+        });
+        y += 3;
+      }
+
+      // ── Financials ──
+      if (r.financials && r.financials.length > 0) {
+        sectionHeader('Financial Terms', [201,168,76]);
+        r.financials.forEach(f => {
+          newPageIfNeeded(20);
+          doc.setFillColor(252,250,245); doc.setDrawColor(201,168,76); doc.setLineWidth(0.4);
+          doc.rect(margin,y,3,5,'F');
+          doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(30,30,28);
+          doc.text(f.label||'', margin+6, y+4);
+          doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(201,130,30);
+          const amtW = doc.getTextWidth(f.amount||'');
+          doc.text(f.amount||'', pageW-margin-amtW, y+4);
+          y += 7;
+          if (f.detail) bodyText(f.detail, 6, [80,80,78]);
+          y += 2;
+        });
+      }
+
+      // ── Key Dates ──
+      sectionHeader('Key Dates & Deadlines', [82,160,224]);
+      if (r.dates && r.dates.length > 0) {
+        r.dates.forEach(d => {
+          newPageIfNeeded(18);
+          const lw = Math.min(doc.getTextWidth(d.label||'')+8, 60);
+          doc.setFillColor(232,244,255); doc.setDrawColor(82,160,224); doc.setLineWidth(0.3);
+          doc.roundedRect(margin,y-4,lw,6,1,1,'FD');
+          doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(82,160,224);
+          doc.text(d.label||'', margin+3, y);
+          doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(50,50,48);
+          const dl = doc.splitTextToSize(d.detail||'', contentW-lw-10);
+          dl.forEach(l => { newPageIfNeeded(12); doc.text(l,margin+lw+4,y); y+=4.5; });
+          y += 3;
+        });
+      } else bodyText('No specific dates identified.', 0, [136,136,128]);
+      y += 4;
+
+      // ── Obligations ──
+      sectionHeader('Obligations', [82,200,122]);
+      if (r.obligations && r.obligations.length > 0) {
+        r.obligations.forEach(o => {
+          newPageIfNeeded(20);
+          const oText = typeof o === 'string' ? o : (o.obligation||'');
+          const oParty = typeof o === 'object' ? (o.party||'') : '';
+          const oConseq = typeof o === 'object' ? (o.consequence||'') : '';
+          if (oParty) {
+            doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(201,168,76);
+            doc.text(oParty.toUpperCase(), margin, y); y+=4;
+          }
+          doc.setFillColor(201,168,76); doc.circle(margin+2,y-1.5,1.2,'F');
+          bodyText(oText, 6);
+          if (oConseq) bodyText(`⚠ ${oConseq}`, 6, [200,120,50]);
+          y += 1;
+        });
+      } else bodyText('No obligations identified.', 0, [136,136,128]);
+      y += 4;
+
+      // ── Rights ──
+      if (r.rights && r.rights.length > 0) {
+        sectionHeader('Rights & Entitlements', [82,200,122]);
+        r.rights.forEach(right => {
+          newPageIfNeeded(18);
+          doc.setFillColor(240,252,244); doc.setDrawColor(82,200,122); doc.setLineWidth(0.3);
+          doc.rect(margin,y,3,5,'F');
+          doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(82,160,82);
+          doc.text((right.party||'').toUpperCase(), margin+6, y+4); y+=7;
+          bodyText(right.right||'', 6);
+          if (right.conditions) bodyText(right.conditions, 6, [136,136,128]);
+          y += 1;
+        });
+      }
+
+      // ── Termination ──
+      const term = r.termination || {};
+      if (term.initial_term) {
+        sectionHeader('Term & Termination', [224,154,82]);
+        const termItems = [
+          ['Initial Term', term.initial_term],
+          ['Renewal', term.renewal],
+          ['Notice Period', term.notice_period],
+          ['Termination for Cause', term.termination_for_cause],
+          ['Termination for Convenience', term.termination_for_convenience],
+          ['Survives Termination', term.post_termination],
+        ].filter(([,v]) => v);
+        termItems.forEach(([lbl, val]) => {
+          newPageIfNeeded(18);
+          label(lbl);
+          bodyText(val, 0, [50,50,48]);
+          y += 1;
+        });
+      }
+
+      // ── Governing Law ──
+      const gov = r.governing_law || {};
+      if (gov.jurisdiction) {
+        sectionHeader('Governing Law & Disputes', [120,120,200]);
+        [['Governing Law', gov.jurisdiction], ['Dispute Resolution', gov.dispute_resolution], ['Venue', gov.venue]]
+          .filter(([,v])=>v)
+          .forEach(([lbl,val]) => { label(lbl); bodyText(val, 0, [50,50,48]); y+=1; });
+      }
+
+      // ── Risks ──
+      sectionHeader('Risk Assessment', [224,82,82]);
+      const rc = {
+        critical: {fill:[255,235,235],border:[200,50,50],label:'CRITICAL',tc:[200,50,50]},
+        high: {fill:[255,240,240],border:[224,82,82],label:'HIGH',tc:[224,82,82]},
+        medium: {fill:[255,246,237],border:[224,154,82],label:'MEDIUM',tc:[224,154,82]},
+        low: {fill:[237,246,255],border:[82,160,224],label:'LOW',tc:[82,160,224]}
+      };
+      if (r.risks && r.risks.length > 0) {
+        r.risks.forEach(risk => {
+          const c = rc[risk.severity] || rc.low;
+          const descLines = doc.splitTextToSize(risk.description||'', contentW-28);
+          const recLines = risk.recommendation ? doc.splitTextToSize(`Recommendation: ${risk.recommendation}`, contentW-12) : [];
+          const rh = (descLines.length + recLines.length) * 5 + 16;
+          newPageIfNeeded(rh+5);
+          doc.setFillColor(...c.fill); doc.setDrawColor(...c.border); doc.setLineWidth(0.3);
+          doc.rect(margin,y,contentW,rh,'FD');
+          doc.setFillColor(...c.border); doc.rect(margin,y,3,rh,'F');
+          const bw = doc.getTextWidth(c.label)+8;
+          doc.setFillColor(...c.border); doc.roundedRect(margin+7,y+3,bw,5,1,1,'F');
+          doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(255,255,255);
+          doc.text(c.label,margin+11,y+6.8);
+          if (risk.category) {
+            doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(136,136,128);
+            doc.text((risk.category||'').toUpperCase(), margin+bw+12, y+6.8);
+          }
+          if (risk.title) {
+            doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(30,30,28);
+            doc.text(risk.title, margin+7, y+13);
+          }
+          let ry = y + (risk.title ? 18 : 12);
+          doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(50,50,48);
+          descLines.forEach(l => { doc.text(l, margin+7, ry); ry+=5; });
+          if (recLines.length > 0) {
+            doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(150,110,20);
+            recLines.forEach(l => { doc.text(l, margin+7, ry); ry+=4.5; });
+          }
+          y += rh + 4;
+        });
+      } else bodyText('No risks identified.', 0, [136,136,128]);
+
+      // ── Missing Clauses ──
+      if (r.missing_clauses && r.missing_clauses.length > 0) {
+        sectionHeader('Missing or Weak Clauses', [200,100,50]);
+        r.missing_clauses.forEach(m => {
+          newPageIfNeeded(18);
+          const impColor = m.importance === 'high' ? [224,82,82] : m.importance === 'medium' ? [224,154,82] : [136,136,136];
+          doc.setFillColor(...impColor); doc.rect(margin,y,3,5,'F');
+          doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(30,30,28);
+          doc.text(m.clause||'', margin+6, y+4); y+=7;
+          bodyText(m.explanation||'', 6, [80,80,78]);
+          y+=1;
+        });
+      }
+
+      // ── Footer on every page ──
+      const tp = doc.internal.getNumberOfPages();
+      for(let i=1;i<=tp;i++){
+        doc.setPage(i);
+        doc.setFillColor(245,244,240); doc.rect(0,pageH-12,pageW,12,'F');
+        doc.setFillColor(201,168,76); doc.rect(0,pageH-12,pageW,0.5,'F');
+        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(136,136,128);
+        doc.text('Generated by LexAI — Contract Intelligence',margin,pageH-5);
+        doc.text(`Page ${i} of ${tp}`,pageW-margin,pageH-5,{align:'right'});
+        doc.text('This analysis is for informational purposes only and does not constitute legal advice.',pageW/2,pageH-5,{align:'center'});
+      }
+
       doc.save(`lexai_analysis_${currentFileName.replace(/[^a-z0-9]/gi,'_').toLowerCase()}.pdf`);
-    } catch(err){alert('Export failed: '+err.message);}
+    } catch(err){ alert('Export failed: '+err.message); }
     btn.textContent='↓ Export PDF';
   }
 </script>
