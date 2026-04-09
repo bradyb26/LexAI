@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+    <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -599,8 +600,8 @@
     <div class="user-card">
       <div class="user-avatar">F</div>
       <div class="user-info">
-        <div class="user-name">Founding Member</div>
-        <div class="user-plan">$49/mo · Locked Forever</div>
+        <div class="user-name" id="userNameDisplay">Member</div>
+        <div class="user-plan" id="userPlanDisplay">$49/mo · Active</div>
       </div>
     </div>
   </div>
@@ -809,6 +810,27 @@
 </div>
 
 <script>
+  // Auth guard
+  (function() {
+    const user = JSON.parse(localStorage.getItem('lexai_user') || 'null');
+    const token = localStorage.getItem('lexai_token');
+    if (!token || !user) { window.location.href = '/login'; return; }
+    if (user.subscription_status !== 'active' && !user.is_founder) {
+      window.location.href = '/signup';
+    }
+    // Show user name
+    const nameEl = document.getElementById('userNameDisplay');
+    if (nameEl) nameEl.textContent = user.full_name || user.email || 'Member';
+    const planEl = document.getElementById('userPlanDisplay');
+    if (planEl) planEl.textContent = user.is_founder ? 'Founder · Free' : '$49/mo · Active';
+  })();
+
+  function logout() {
+    localStorage.removeItem('lexai_token');
+    localStorage.removeItem('lexai_user');
+    window.location.href = '/login';
+  }
+
   function showTool(tool) {
     document.getElementById('dashboardView').style.display = 'none';
     document.getElementById('toolView').style.display = 'flex';
