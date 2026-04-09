@@ -268,42 +268,6 @@
     }
 
     /* ── STATS ROW ── */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 1.25rem 1.5rem;
-    }
-
-    .stat-card-label {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.58rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 0.6rem;
-    }
-
-    .stat-card-value {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2rem;
-      font-weight: 300;
-      color: var(--text);
-      line-height: 1;
-    }
-
-    .stat-card-sub {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      margin-top: 0.3rem;
-    }
-
     /* ── TOOLS GRID ── */
     .section-header {
       display: flex;
@@ -329,7 +293,7 @@
 
     .tools-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 1rem;
       margin-bottom: 2rem;
     }
@@ -414,12 +378,6 @@
     }
 
     /* ── RECENT ACTIVITY ── */
-    .bottom-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-
     .panel {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -534,17 +492,14 @@
     .roadmap-status.next { color: var(--gold); }
 
     @media (max-width: 1100px) {
-      .stats-row { grid-template-columns: repeat(2, 1fr); }
-      .tools-grid { grid-template-columns: repeat(2, 1fr); }
-      .bottom-grid { grid-template-columns: 1fr; }
-    }
+        .tools-grid { grid-template-columns: repeat(2, 1fr); }
+      }
 
     @media (max-width: 768px) {
       .sidebar { display: none; }
       .main { margin-left: 0; }
       .tools-grid { grid-template-columns: 1fr; }
-      .stats-row { grid-template-columns: repeat(2, 1fr); }
-    }
+      }
   </style>
 </head>
 <body>
@@ -623,15 +578,11 @@
       <div class="welcome-banner">
         <div class="welcome-text">
           <h2>Welcome to LexAI</h2>
-          <p>Your AI legal platform is ready. Start by analyzing a contract or explore what's coming next.</p>
+          <p>Your AI legal platform is ready. Pick a tool below to get started.</p>
         </div>
         <div class="founding-chip">Founding Member</div>
       </div>
 
-      <!-- Stats -->
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-card-label">Contracts Analyzed</div>
           <div class="stat-card-value">—</div>
           <div class="stat-card-sub">Total contracts analyzed</div>
         </div>
@@ -726,19 +677,6 @@
         </div>
       </div>
 
-      <!-- Bottom Grid -->
-      <div class="bottom-grid">
-        <div class="panel">
-          <div class="panel-title">
-            Recent Activity
-            <span style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--text-muted)">This Month</span>
-          </div>
-          <div class="activity-item">
-            <div class="activity-icon">⚖</div>
-            <div class="activity-info">
-              <div class="activity-name">No analyses yet</div>
-              <div class="activity-meta">Start by uploading your first contract</div>
-            </div>
           </div>
           <div style="margin-top:1rem;">
             <a href="#" onclick="showTool('summarizer'); return false;" style="font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);text-decoration:none;">Analyze First Contract →</a>
@@ -822,65 +760,9 @@
     if (nameEl) nameEl.textContent = _user.full_name || _user.email || 'Member';
     const planEl = document.getElementById('userPlanDisplay');
     if (planEl) planEl.textContent = _user.is_founder ? 'Founder · Free' : '$49/mo · Active';
-    // Load real stats
-    loadStats(_user.id, _token);
+
   }
 
-  async function loadStats(userId, token) {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/activity?user_id=eq.${userId}&select=*&order=created_at.desc`, {
-        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
-      });
-      const activities = await res.json();
-      if (!Array.isArray(activities)) return;
-
-      // Count stats
-      const analyzed = activities.filter(a => a.action === 'contract_analyzed').length;
-      const questions = activities.filter(a => a.action === 'question_asked').length;
-      const exports = activities.filter(a => a.action === 'pdf_exported').length;
-
-      // Update stat cards
-      const statEls = document.querySelectorAll('.stat-card-value');
-      if (statEls[0]) statEls[0].textContent = analyzed || '0';
-      if (statEls[1]) statEls[1].textContent = questions || '0';
-      if (statEls[2]) statEls[2].textContent = exports || '0';
-
-      // Estimate time saved (15 min per contract)
-      const timeSaved = Math.round(analyzed * 0.5);
-      if (statEls[3]) statEls[3].textContent = timeSaved > 0 ? `${timeSaved}h` : '0h';
-
-      // Update recent activity
-      const activityContainer = document.querySelector('.activity-item').parentNode;
-      if (activities.length > 0) {
-        const recentHtml = activities.slice(0, 5).map(a => {
-          const date = new Date(a.created_at);
-          const timeAgo = getTimeAgo(date);
-          const icons = { contract_analyzed: '⚖', question_asked: '💬', pdf_exported: '📄' };
-          const labels = { contract_analyzed: 'Contract Analyzed', question_asked: 'Question Asked', pdf_exported: 'PDF Exported' };
-          return `
-            <div class="activity-item">
-              <div class="activity-icon">${icons[a.action] || '⚖'}</div>
-              <div class="activity-info">
-                <div class="activity-name">${a.document_name || 'Contract'}</div>
-                <div class="activity-meta">${labels[a.action] || a.action} · ${timeAgo}</div>
-              </div>
-              <span class="activity-tag">${labels[a.action]?.split(' ')[0] || 'Done'}</span>
-            </div>`;
-        }).join('');
-        activityContainer.innerHTML = recentHtml;
-      }
-    } catch (err) {
-      console.error('Stats load error:', err);
-    }
-  }
-
-  function getTimeAgo(date) {
-    const seconds = Math.floor((new Date() - date) / 1000);
-    if (seconds < 60) return 'Just now';
-    if (seconds < 3600) return `${Math.floor(seconds/60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds/3600)}h ago`;
-    return `${Math.floor(seconds/86400)}d ago`;
-  }
 
   function logout() {
     localStorage.removeItem('lexai_token');
