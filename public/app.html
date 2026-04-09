@@ -322,9 +322,20 @@
     document.getElementById('resultsContent').innerHTML = `<div class="placeholder"><div class="placeholder-icon" style="animation:spin 1.5s linear infinite;display:inline-block">⚙</div><p>Analyzing contract...</p></div>`;
     try {
       const user = JSON.parse(localStorage.getItem('lexai_user') || '{}');
-      // Try multiple possible id field names
-      const userId = user.id || user.user_id || user.sub || null;
-      console.log('User from localStorage:', JSON.stringify(user));
+      // Extract userId from JWT token as fallback
+      let userId = user.id || user.user_id || user.sub || null;
+      if (!userId) {
+        try {
+          const token = localStorage.getItem('lexai_token');
+          if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            userId = payload.sub || null;
+            // Save it back so we don't need to decode again
+            user.id = userId;
+            localStorage.setItem('lexai_user', JSON.stringify(user));
+          }
+        } catch(e) { console.error('Token decode error:', e); }
+      }
       console.log('userId being sent:', userId);
       const response = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contract, userId: userId, documentName: currentFileName }) });
       const result = await response.json();
