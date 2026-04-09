@@ -897,12 +897,14 @@
   function showDashboard() {
     document.getElementById('dashboardView').style.display = 'block';
     document.getElementById('toolView').style.display = 'none';
-    // Reset scroll to top
     document.querySelector('.main').scrollTop = 0;
-    // Set dashboard nav item as active
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     const dashLink = document.getElementById('dashboardNavLink');
     if (dashLink) dashLink.classList.add('active');
+    // Reload stats every time dashboard is shown
+    const u = JSON.parse(localStorage.getItem('lexai_user') || '{}');
+    const t = localStorage.getItem('lexai_token');
+    if (u.id && t) loadStats(u.id, t);
   }
 
   function comingSoon() {
