@@ -286,7 +286,6 @@
     hideError();
 
     if (founderCodeApplied) {
-      // Apply founder code — skip payment
       const token = localStorage.getItem('lexai_token');
 
       // Mark code as used
@@ -300,7 +299,7 @@
         body: JSON.stringify({ is_used: true, used_by: userId })
       });
 
-      // Update profile to founder
+      // Update profile to founder in Supabase
       await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
         method: 'PATCH',
         headers: {
@@ -314,6 +313,12 @@
           founder_code: appliedCode
         })
       });
+
+      // CRITICAL: Update localStorage so auth guard passes
+      const user = JSON.parse(localStorage.getItem('lexai_user') || '{}');
+      user.subscription_status = 'active';
+      user.is_founder = true;
+      localStorage.setItem('lexai_user', JSON.stringify(user));
 
       window.location.href = '/dashboard';
       return;
