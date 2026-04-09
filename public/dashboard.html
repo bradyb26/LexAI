@@ -183,6 +183,7 @@
       flex-direction: column;
       min-height: 100vh;
       overflow-y: auto;
+      height: 100vh;
     }
 
     .topbar {
@@ -226,7 +227,7 @@
 
     .topbar-btn:hover { background: var(--gold-light); }
 
-    .content { padding: 2rem; flex: 1; }
+    .content { padding: 2rem; flex: 1; overflow-y: auto; }
 
     /* ── WELCOME BANNER ── */
     .welcome-banner {
@@ -557,7 +558,7 @@
 
   <div class="sidebar-section">
     <div class="sidebar-section-label">Main</div>
-    <a href="#" class="nav-item active" onclick="showTool('dashboard'); return false;">
+    <a href="#" class="nav-item active" id="dashboardNavLink" onclick="showDashboard(); return false;">
       <span class="nav-icon">⊞</span> Dashboard
     </a>
   </div>
@@ -817,7 +818,12 @@
   function showDashboard() {
     document.getElementById('dashboardView').style.display = 'block';
     document.getElementById('toolView').style.display = 'none';
-    document.querySelectorAll('.nav-item').forEach((i, idx) => { if (idx === 0) i.classList.add('active'); });
+    // Reset scroll to top
+    document.querySelector('.main').scrollTop = 0;
+    // Set dashboard nav item as active
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    const dashLink = document.getElementById('dashboardNavLink');
+    if (dashLink) dashLink.classList.add('active');
   }
 
   function comingSoon() {
