@@ -321,7 +321,8 @@
     currentResult = null;
     document.getElementById('resultsContent').innerHTML = `<div class="placeholder"><div class="placeholder-icon" style="animation:spin 1.5s linear infinite;display:inline-block">⚙</div><p>Analyzing contract...</p></div>`;
     try {
-      const response = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contract }) });
+      const user = JSON.parse(localStorage.getItem('lexai_user') || '{}');
+      const response = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contract, userId: user.id || null, documentName: currentFileName }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Something went wrong');
       currentResult = result;
