@@ -316,6 +316,7 @@
 
       // CRITICAL: Update localStorage so auth guard passes
       const user = JSON.parse(localStorage.getItem('lexai_user') || '{}');
+      user.id = userId;  // ensure id is always set
       user.subscription_status = 'active';
       user.is_founder = true;
       localStorage.setItem('lexai_user', JSON.stringify(user));
