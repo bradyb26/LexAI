@@ -1,1 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LexAI — Sign Up</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Syne:wght@400;500;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a08; --surface: #111110; --surface2: #1a1a18; --border: #2a2a26;
+      --gold: #c9a84c; --gold-light: #e8c97a; --text: #e8e8e0; --text-muted: #888880;
+      --green: #52c87a; --red: #e05252;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
 
+    .auth-container { width: 100%; max-width: 480px; }
+
+    .auth-logo { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; color: var(--gold); text-align: center; margin-bottom: 0.3rem; }
+    .auth-logo-sub { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); text-align: center; margin-bottom: 2.5rem; }
+
+    .auth-card { background: var(--surface); border: 1px solid var(--border); padding: 2.5rem; }
+
+    .auth-title { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 400; color: var(--text); margin-bottom: 0.4rem; }
+    .auth-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2rem; line-height: 1.5; }
+
+    .step-indicator { display: flex; gap: 0; margin-bottom: 2rem; }
+    .step { flex: 1; height: 3px; background: var(--border); transition: background 0.3s; }
+    .step.active { background: var(--gold); }
+    .step.done { background: var(--green); }
+
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem; display: block; }
+    .form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: 'Syne', sans-serif; font-size: 0.9rem; padding: 0.75rem 1rem; outline: none; transition: border-color 0.2s; }
+    .form-input:focus { border-color: var(--gold); }
+    .form-input::placeholder { color: var(--text-muted); opacity: 0.5; }
+
+    .founder-row { display: flex; gap: 0.5rem; }
+    .founder-apply-btn { padding: 0.75rem 1rem; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .founder-apply-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    .founder-success { display: none; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: rgba(82,200,122,0.08); border: 1px solid var(--green); margin-top: 0.5rem; }
+    .founder-success.visible { display: flex; }
+    .founder-success-text { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.08em; color: var(--green); }
+
+    .submit-btn { width: 100%; padding: 1rem; background: var(--gold); color: #0a0a08; border: none; font-family: 'DM Mono', monospace; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; margin-top: 0.5rem; }
+    .submit-btn:hover { background: var(--gold-light); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .auth-switch { text-align: center; margin-top: 1.5rem; font-size: 0.82rem; color: var(--text-muted); }
+    .auth-switch a { color: var(--gold); text-decoration: none; }
+    .auth-switch a:hover { color: var(--gold-light); }
+
+    .error-msg { display: none; padding: 0.75rem 1rem; background: rgba(224,82,82,0.08); border: 1px solid var(--red); color: var(--red); font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .error-msg.visible { display: block; }
+
+    /* Pricing card */
+    .pricing-card { background: var(--surface2); border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; position: relative; }
+    .pricing-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(to right, var(--gold), var(--gold-light)); }
+    .pricing-amount { font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 300; color: var(--gold); line-height: 1; }
+    .pricing-amount sup { font-size: 1.2rem; vertical-align: super; }
+    .pricing-period { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; }
+    .pricing-features { list-style: none; }
+    .pricing-features li { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; color: var(--text-muted); padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .pricing-features li:last-child { border-bottom: none; }
+    .pricing-check { color: var(--gold); font-size: 0.7rem; }
+
+    .founder-toggle { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem; cursor: pointer; }
+    .founder-toggle-text { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+    .founder-toggle-text span { color: var(--gold); }
+
+    .founder-section { display: none; }
+    .founder-section.visible { display: block; }
+
+    .divider { display: flex; align-items: center; gap: 1rem; margin: 1.25rem 0; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .divider span { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); }
+
+    .spinner-inline { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="auth-container">
+  <div class="auth-logo">LexAI</div>
+  <div class="auth-logo-sub">Contract Intelligence</div>
+
+  <div class="auth-card">
+    <!-- Step indicators -->
+    <div class="step-indicator">
+      <div class="step active" id="step1"></div>
+      <div class="step" id="step2"></div>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <!-- STEP 1: Account creation -->
+    <div id="stepAccountView">
+      <div class="auth-title">Create your account</div>
+      <div class="auth-subtitle">Join LexAI and start analyzing contracts in seconds. No credit card required to start.</div>
+
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" id="fullName" type="text" placeholder="Your full name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" id="signupEmail" type="email" placeholder="your@email.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="signupPassword" type="password" placeholder="At least 8 characters" />
+      </div>
+
+      <button class="submit-btn" id="createAccountBtn" onclick="createAccount()">
+        Continue to Payment →
+      </button>
+    </div>
+
+    <!-- STEP 2: Payment -->
+    <div id="stepPaymentView" style="display:none;">
+      <div class="auth-title">Choose your plan</div>
+      <div class="auth-subtitle">Get full access to LexAI. Cancel anytime.</div>
+
+      <div class="pricing-card">
+        <div class="pricing-amount"><sup>$</sup>49</div>
+        <div class="pricing-period">Per month · Founding member price</div>
+        <ul class="pricing-features">
+          <li><span class="pricing-check">✦</span> Unlimited contract analysis</li>
+          <li><span class="pricing-check">✦</span> AI-powered risk assessment</li>
+          <li><span class="pricing-check">✦</span> Ask questions about any contract</li>
+          <li><span class="pricing-check">✦</span> Professional PDF export reports</li>
+          <li><span class="pricing-check">✦</span> Document Drafter (coming soon)</li>
+          <li><span class="pricing-check">✦</span> Price locked in forever</li>
+        </ul>
+      </div>
+
+      <div class="founder-toggle" onclick="toggleFounderCode()">
+        <span class="founder-toggle-text">Have a <span>founder code</span>? Click here</span>
+      </div>
+
+      <div class="founder-section" id="founderSection">
+        <div class="form-group">
+          <label class="form-label">Founder Code</label>
+          <div class="founder-row">
+            <input class="form-input" id="founderCode" type="text" placeholder="Enter your code" style="text-transform:uppercase;" />
+            <button class="founder-apply-btn" onclick="applyFounderCode()">Apply</button>
+          </div>
+        </div>
+        <div class="founder-success" id="founderSuccess">
+          <span>✓</span>
+          <span class="founder-success-text">Founder code applied — free access unlocked</span>
+        </div>
+      </div>
+
+      <div class="divider"><span>or pay monthly</span></div>
+
+      <button class="submit-btn" id="payBtn" onclick="handlePayment()">
+        Start Subscription — $49/month
+      </button>
+
+      <div class="auth-switch" style="margin-top:1rem;">
+        <a href="#" onclick="goBackToStep1()">← Back</a>
+      </div>
+    </div>
+
+    <div class="auth-switch">Already have an account? <a href="/login">Sign in</a></div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://ljgykrqlndtsmnfzioho.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_YOLEJpJM7ehjtx14Dx5Mxg_BTIt_hRL';
+  const STRIPE_PK = 'pk_test_51TKLwu9dNz5jPKuXlzGlmFgbRScoHwA1fPej4wOyMPlL35PkzDiYkD2YUIoBbAg3uElwld7XOstvorcl28pNUX0P00urotkeQe';
+
+  let userEmail = '';
+  let userId = '';
+  let founderCodeApplied = false;
+  let appliedCode = '';
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function hideError() {
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+
+  function toggleFounderCode() {
+    const section = document.getElementById('founderSection');
+    section.classList.toggle('visible');
+  }
+
+  async function applyFounderCode() {
+    const code = document.getElementById('founderCode').value.trim().toUpperCase();
+    if (!code) { showError('Please enter a founder code.'); return; }
+
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/founder_codes?code=eq.${code}&is_used=eq.false&select=*`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      }
+    });
+
+    const data = await response.json();
+    if (data && data.length > 0) {
+      founderCodeApplied = true;
+      appliedCode = code;
+      document.getElementById('founderSuccess').classList.add('visible');
+      document.getElementById('payBtn').textContent = 'Get Free Access →';
+      document.getElementById('payBtn').style.background = 'var(--green)';
+      hideError();
+    } else {
+      showError('Invalid or already used founder code.');
+    }
+  }
+
+  async function createAccount() {
+    hideError();
+    const fullName = document.getElementById('fullName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value.trim();
+
+    if (!fullName || !email || !password) { showError('Please fill in all fields.'); return; }
+    if (password.length < 8) { showError('Password must be at least 8 characters.'); return; }
+
+    const btn = document.getElementById('createAccountBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-inline"></span> Creating account...';
+
+    // Sign up with Supabase
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ email, password, data: { full_name: fullName } })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      showError(data.error.message || 'Signup failed. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Continue to Payment →';
+      return;
+    }
+
+    userId = data.user?.id || data.id;
+    userEmail = email;
+
+    // Create profile in database
+    await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${data.access_token}`
+      },
+      body: JSON.stringify({
+        id: userId,
+        email: email,
+        full_name: fullName,
+        subscription_status: 'inactive'
+      })
+    });
+
+    // Store session token
+    localStorage.setItem('lexai_token', data.access_token);
+    localStorage.setItem('lexai_user', JSON.stringify({ id: userId, email, full_name: fullName }));
+
+    // Move to payment step
+    document.getElementById('stepAccountView').style.display = 'none';
+    document.getElementById('stepPaymentView').style.display = 'block';
+    document.getElementById('step1').classList.remove('active');
+    document.getElementById('step1').classList.add('done');
+    document.getElementById('step2').classList.add('active');
+  }
+
+  async function handlePayment() {
+    hideError();
+
+    if (founderCodeApplied) {
+      // Apply founder code — skip payment
+      const token = localStorage.getItem('lexai_token');
+
+      // Mark code as used
+      await fetch(`${SUPABASE_URL}/rest/v1/founder_codes?code=eq.${appliedCode}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ is_used: true, used_by: userId })
+      });
+
+      // Update profile to founder
+      await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          subscription_status: 'active',
+          is_founder: true,
+          founder_code: appliedCode
+        })
+      });
+
+      window.location.href = '/dashboard';
+      return;
+    }
+
+    // Redirect to Stripe checkout
+    const btn = document.getElementById('payBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-inline"></span> Redirecting to payment...';
+
+    const response = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, email: userEmail })
+    });
+
+    const data = await response.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      showError('Payment setup failed. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Start Subscription — $49/month';
+    }
+  }
+
+  function goBackToStep1() {
+    document.getElementById('stepPaymentView').style.display = 'none';
+    document.getElementById('stepAccountView').style.display = 'block';
+    document.getElementById('step2').classList.remove('active');
+    document.getElementById('step1').classList.remove('done');
+    document.getElementById('step1').classList.add('active');
+    document.getElementById('createAccountBtn').disabled = false;
+    document.getElementById('createAccountBtn').textContent = 'Continue to Payment →';
+  }
+</script>
+
+</body>
+</html>
