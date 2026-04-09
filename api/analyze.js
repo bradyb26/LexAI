@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { contract } = req.body;
+  const { contract, userId, documentName } = req.body;
 
   if (!contract || contract.trim().length === 0) {
     return res.status(400).json({ error: 'No contract provided' });
@@ -134,6 +134,29 @@ CRITICAL INSTRUCTIONS:
     raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
 
     const result = JSON.parse(raw);
+
+    // Log activity to Supabase if userId provided
+    if (userId) {
+      try {
+        await fetch(`${process.env.SUPABASE_URL}/rest/v1/activity`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': process.env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`
+          },
+          body: JSON.stringify({
+            user_id: userId,
+            action: 'contract_analyzed',
+            document_name: documentName || 'Untitled Contract'
+          })
+        });
+      } catch (logErr) {
+        // Don't fail the main request if logging fails
+        console.error('Activity log error:', logErr);
+      }
+    }
+
     return res.status(200).json(result);
 
   } catch (err) {
