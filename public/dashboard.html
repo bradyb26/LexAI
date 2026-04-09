@@ -1,5 +1,4 @@
-
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -634,22 +633,22 @@
         <div class="stat-card">
           <div class="stat-card-label">Contracts Analyzed</div>
           <div class="stat-card-value">—</div>
-          <div class="stat-card-sub">Analyze your first contract</div>
+          <div class="stat-card-sub">Total contracts analyzed</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">Questions Asked</div>
           <div class="stat-card-value">—</div>
-          <div class="stat-card-sub">Use the Ask a Question feature</div>
+          <div class="stat-card-sub">Questions asked about contracts</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">PDFs Exported</div>
           <div class="stat-card-value">—</div>
-          <div class="stat-card-sub">Export your first report</div>
+          <div class="stat-card-sub">PDF reports exported</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">Time Saved</div>
           <div class="stat-card-value">—</div>
-          <div class="stat-card-sub">Est. hours saved this month</div>
+          <div class="stat-card-sub">Estimated hours saved</div>
         </div>
       </div>
 
@@ -810,20 +809,78 @@
 </div>
 
 <script>
+  const SUPABASE_URL = 'https://ljgykrqlndtsmnfzioho.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_YOLEJpJM7ehjtx14Dx5Mxg_BTIt_hRL';
+
   // Auth guard
-  (function() {
-    const user = JSON.parse(localStorage.getItem('lexai_user') || 'null');
-    const token = localStorage.getItem('lexai_token');
-    if (!token || !user) { window.location.href = '/login'; return; }
-    if (user.subscription_status !== 'active' && !user.is_founder) {
-      window.location.href = '/signup';
-    }
-    // Show user name
+  const _user = JSON.parse(localStorage.getItem('lexai_user') || 'null');
+  const _token = localStorage.getItem('lexai_token');
+  if (!_token || !_user) { window.location.href = '/login'; }
+  else if (_user.subscription_status !== 'active' && !_user.is_founder) { window.location.href = '/signup'; }
+  else {
     const nameEl = document.getElementById('userNameDisplay');
-    if (nameEl) nameEl.textContent = user.full_name || user.email || 'Member';
+    if (nameEl) nameEl.textContent = _user.full_name || _user.email || 'Member';
     const planEl = document.getElementById('userPlanDisplay');
-    if (planEl) planEl.textContent = user.is_founder ? 'Founder · Free' : '$49/mo · Active';
-  })();
+    if (planEl) planEl.textContent = _user.is_founder ? 'Founder · Free' : '$49/mo · Active';
+    // Load real stats
+    loadStats(_user.id, _token);
+  }
+
+  async function loadStats(userId, token) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/activity?user_id=eq.${userId}&select=*&order=created_at.desc`, {
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
+      });
+      const activities = await res.json();
+      if (!Array.isArray(activities)) return;
+
+      // Count stats
+      const analyzed = activities.filter(a => a.action === 'contract_analyzed').length;
+      const questions = activities.filter(a => a.action === 'question_asked').length;
+      const exports = activities.filter(a => a.action === 'pdf_exported').length;
+
+      // Update stat cards
+      const statEls = document.querySelectorAll('.stat-card-value');
+      if (statEls[0]) statEls[0].textContent = analyzed || '0';
+      if (statEls[1]) statEls[1].textContent = questions || '0';
+      if (statEls[2]) statEls[2].textContent = exports || '0';
+
+      // Estimate time saved (15 min per contract)
+      const timeSaved = Math.round(analyzed * 0.5);
+      if (statEls[3]) statEls[3].textContent = timeSaved > 0 ? `${timeSaved}h` : '0h';
+
+      // Update recent activity
+      const activityContainer = document.querySelector('.activity-item').parentNode;
+      if (activities.length > 0) {
+        const recentHtml = activities.slice(0, 5).map(a => {
+          const date = new Date(a.created_at);
+          const timeAgo = getTimeAgo(date);
+          const icons = { contract_analyzed: '⚖', question_asked: '💬', pdf_exported: '📄' };
+          const labels = { contract_analyzed: 'Contract Analyzed', question_asked: 'Question Asked', pdf_exported: 'PDF Exported' };
+          return `
+            <div class="activity-item">
+              <div class="activity-icon">${icons[a.action] || '⚖'}</div>
+              <div class="activity-info">
+                <div class="activity-name">${a.document_name || 'Contract'}</div>
+                <div class="activity-meta">${labels[a.action] || a.action} · ${timeAgo}</div>
+              </div>
+              <span class="activity-tag">${labels[a.action]?.split(' ')[0] || 'Done'}</span>
+            </div>`;
+        }).join('');
+        activityContainer.innerHTML = recentHtml;
+      }
+    } catch (err) {
+      console.error('Stats load error:', err);
+    }
+  }
+
+  function getTimeAgo(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds/60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds/3600)}h ago`;
+    return `${Math.floor(seconds/86400)}d ago`;
+  }
 
   function logout() {
     localStorage.removeItem('lexai_token');
