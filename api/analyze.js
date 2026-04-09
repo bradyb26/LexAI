@@ -4,6 +4,9 @@ export default async function handler(req, res) {
   }
 
   const { contract, userId, documentName } = req.body;
+  console.log('Analyze called - userId:', userId, 'documentName:', documentName);
+  console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET' : 'NOT SET');
+  console.log('SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? 'SET' : 'NOT SET');
 
   if (!contract || contract.trim().length === 0) {
     return res.status(400).json({ error: 'No contract provided' });
@@ -136,9 +139,10 @@ CRITICAL INSTRUCTIONS:
     const result = JSON.parse(raw);
 
     // Log activity to Supabase if userId provided
+    console.log('Attempting to log activity for userId:', userId);
     if (userId) {
       try {
-        await fetch(`${process.env.SUPABASE_URL}/rest/v1/activity`, {
+        const logRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/activity`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -151,6 +155,8 @@ CRITICAL INSTRUCTIONS:
             document_name: documentName || 'Untitled Contract'
           })
         });
+        const logData = await logRes.json();
+        console.log('Supabase log response:', JSON.stringify(logData));
       } catch (logErr) {
         // Don't fail the main request if logging fails
         console.error('Activity log error:', logErr);
