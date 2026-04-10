@@ -60,9 +60,8 @@
   const SUPABASE_URL = 'https://ljgykrqlndtsmnfzioho.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_YOLEJpJM7ehjtx14Dx5Mxg_BTIt_hRL';
 
-  // Check if already logged in
-  const token = localStorage.getItem('lexai_token');
-  if (token) window.location.href = '/dashboard';
+  // Clear any stale session so login works cleanly
+  // Don't auto-redirect - let user log in fresh
 
   async function login() {
     const email = document.getElementById('loginEmail').value.trim();
